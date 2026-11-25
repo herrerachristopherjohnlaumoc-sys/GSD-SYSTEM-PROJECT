@@ -760,12 +760,12 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="departmentInput">DEPARTMENT</label>
+            <label class="form-label" for="locationInput">LOCATION</label>
             <input
               type="text"
-              id="departmentInput"
+              id="locationInput"
               class="pill-input"
-              placeholder="Enter department name..."
+              placeholder="e.g. Central Office / Building A"
               required
             />
           </div>
@@ -870,7 +870,7 @@
     </main>
   </div>
 
-  <!-- PRINT-ONLY RETURN SLIP SHEET (Matches First Image Format) -->
+  <!-- PRINT-ONLY RETURN SLIP SHEET -->
   <div class="print-return-slip-sheet" id="printReturnSlipSheet">
     <div>
       <div class="ps-header">
@@ -878,13 +878,14 @@
         <div class="ps-gov-line">OFFICE OF THE PRESIDENT</div>
         <div class="ps-agency-main" id="psEntityName">NATIONAL IRRIGATION ADMINISTRATION</div>
         <div class="ps-agency-sub">CENTRAL OFFICE</div>
-        <div class="ps-agency-sub">GENERAL SERVICES DIVISION</div>
-        <div class="ps-address">National Government Center, EDSA, Diliman, Quezon City, 1100</div>
+        <div class="ps-agency-sub">ADMINISTRATIVE DEPARTMENT</div>
+        <div class="ps-agency-sub">GENERAL SERVICE DIVISION</div>
+        <div class="ps-address">National Center, Edsa, Diliman, Quezon City, 1100</div>
       </div>
 
       <div class="ps-doc-title-wrap">
         <div class="ps-doc-title">RETURN SLIP</div>
-        <div class="ps-doc-subtitle">GENERAL SERVICES DIVISION</div>
+        <div class="ps-doc-subtitle">GENERAL SERVICE DIVISION</div>
       </div>
 
       <table class="ps-meta-table">
@@ -894,27 +895,23 @@
         </tr>
         <tr>
           <td><span class="ps-meta-label">DATE OF RETURN:</span> <span id="psDate">-</span></td>
-          <td><span class="ps-meta-label">RESENDER (RETURNED BY):</span> <span id="psResender">-</span></td>
-        </tr>
-        <tr>
-          <td><span class="ps-meta-label">DEPARTMENT / OFFICE:</span> <span id="psDepartment">-</span></td>
-          <td><span class="ps-meta-label">RECEIVER (RECEIVED BY):</span> <span id="psReceiver">-</span></td>
+          <td><span class="ps-meta-label">LOCATION:</span> <span id="psLocation">-</span></td>
         </tr>
       </table>
 
       <table class="ps-items-table">
         <thead>
           <tr>
-            <th style="width: 11%;">ITEM NO.</th>
-            <th style="width: 39%;">ITEM DESCRIPTION / SPECIFICATIONS</th>
+            <th style="width: 12%;">ITEM NO.</th>
+            <th style="width: 38%;">ITEM DESCRIPTION/SPECIFICATIONS</th>
             <th style="width: 10%;">QTY</th>
             <th style="width: 10%;">UNIT</th>
-            <th style="width: 30%;">REMARKS / PURPOSE</th>
+            <th style="width: 30%;">REMARKS</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td class="center">1</td>
+            <td class="center" id="psItemNo">1</td>
             <td id="psItemDesc">-</td>
             <td class="center" id="psQty">-</td>
             <td class="center" id="psUnit">-</td>
@@ -944,26 +941,43 @@
       <table class="ps-sign-table">
         <thead>
           <tr>
-            <th>RETURNED BY:</th>
-            <th>RECEIVED BY:</th>
-            <th>NOTED &amp; APPROVED BY:</th>
+            <th style="width: 50%;">RETURNED BY:</th>
+            <th style="width: 50%;">RECEIVED BY:</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>
               <div class="ps-sign-name" id="psSignResender">-</div>
-              <div class="ps-sign-role">Resender / Personnel</div>
+              <div class="ps-sign-role">GSD PERSONNEL</div>
               <div class="ps-sign-date">Date: ______________</div>
             </td>
             <td>
               <div class="ps-sign-name" id="psSignReceiver">-</div>
-              <div class="ps-sign-role">Receiver / GSD Personnel</div>
+              <div class="ps-sign-role">STOCK PERSONNEL</div>
+              <div class="ps-sign-date">Date: ______________</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table class="ps-sign-table">
+        <thead>
+          <tr>
+            <th style="width: 50%;">Noted by:</th>
+            <th style="width: 50%;">APPROVED BY:</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="ps-sign-name">ENGR. LEXTER G. CADELIÑA</div>
+              <div class="ps-sign-role">MAINTENANCE SUPERINTENDENT B</div>
               <div class="ps-sign-date">Date: ______________</div>
             </td>
             <td>
-              <div class="ps-sign-name">AUTHORIZED GSD SUPERVISOR</div>
-              <div class="ps-sign-role">Chief, General Services Division</div>
+              <div class="ps-sign-name">Arch. RUTHGEN C. MALAZARTE-ABDULA</div>
+              <div class="ps-sign-role">Manager, General Services Division</div>
               <div class="ps-sign-date">Date: ______________</div>
             </td>
           </tr>

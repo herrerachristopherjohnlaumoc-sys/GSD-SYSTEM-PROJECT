@@ -327,16 +327,19 @@ h3,
   display: none;
 }
 
-.actions-cell {
-  min-width: 250px;
-  white-space: normal;
+.actions-cell,
+.inv-actions-cell {
+  min-width: 112px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .action-icons {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: 6px;
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .action-icons .icon-btn {
@@ -351,9 +354,22 @@ h3,
   white-space: nowrap;
 }
 
+.action-icons .icon-btn.icon-only {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #355345;
+}
+
 .action-icons .icon-btn:hover {
   border-color: #b6d08b;
   background: #f4f8ef;
+  color: var(--nia-forest-deep);
 }
 
 .action-icons .icon-btn.delete-btn {
@@ -366,6 +382,111 @@ h3,
   border-color: #bd5948;
   background: #a74436;
   color: #fff;
+}
+
+/* Password Reset Modal */
+.reset-modal-card {
+  max-width: 400px;
+  text-align: center;
+  padding: 28px 26px 24px;
+}
+
+.reset-badge-circle {
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 14px;
+  border-radius: 999px;
+  background: #e6f4ea;
+  border: 1px solid #bce2c8;
+  color: #1e7e3e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reset-modal-title {
+  margin: 0 0 4px;
+  font-family: 'Manrope', 'DM Sans', sans-serif;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--nia-forest-deep);
+}
+
+.reset-modal-subtitle {
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: var(--nia-muted);
+}
+
+.reset-temp-box {
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  border: 1.5px dashed #9bc503;
+  border-radius: 8px;
+  background: #f8fbf5;
+  font-family: 'Cascadia Mono', 'Fira Code', Consolas, 'Courier New', monospace;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--nia-forest-deep);
+  user-select: all;
+  word-break: break-all;
+}
+
+.reset-copy-btn {
+  width: 100%;
+  min-height: 40px;
+  margin-bottom: 14px;
+  border: 1px solid var(--nia-forest);
+  border-radius: 7px;
+  background: var(--nia-forest);
+  color: #fff;
+  font: 700 13px 'DM Sans', 'Segoe UI', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.reset-copy-btn:hover {
+  background: var(--nia-forest-deep);
+}
+
+.reset-warning-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 13px;
+  margin-bottom: 16px;
+  border: 1px solid #f0d7a7;
+  border-radius: 7px;
+  background: #fff9eb;
+  color: #7c5210;
+  text-align: left;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.reset-warning-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #b7791f;
+}
+
+.reset-done-btn {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #bfd0c2;
+  border-radius: 7px;
+  background: #fff;
+  color: var(--nia-forest);
+  font: 700 13px 'DM Sans', 'Segoe UI', sans-serif;
+  cursor: pointer;
+}
+
+.reset-done-btn:hover {
+  background: #f3f7f2;
 }
 
 .search-wrap,
@@ -539,22 +660,62 @@ tbody td {
   color: #8a5b16;
 }
 
+.recent-scroll-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 550px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
 .recent-po-entry,
 .recent-so-entry,
-.recent-slip-entry {
-  padding: 14px;
+.recent-slip-entry,
+.recent-entry-card {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
   border: 1px solid #e4ece4;
-  border-radius: 6px;
+  border-radius: 7px;
   background: #fbfdf9;
+  line-height: 1.4;
   transition: border-color .16s ease, background-color .16s ease, transform .16s ease;
 }
 
 .recent-po-entry:hover,
 .recent-so-entry:hover,
-.recent-slip-entry:hover {
+.recent-slip-entry:hover,
+.recent-entry-card:hover {
   transform: translateX(2px);
   border-color: #b6d08b;
   background: #f5faee;
+}
+
+.recent-entry-ref {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--nia-forest-deep);
+}
+
+.recent-entry-product {
+  font-size: 13px;
+  font-weight: 700;
+  color: #162418;
+  word-break: break-word;
+}
+
+.recent-entry-meta,
+.recent-entry-office {
+  font-size: 12px;
+  color: #355345;
+}
+
+.recent-entry-actor {
+  font-size: 11px;
+  color: var(--nia-muted);
 }
 
 .toast,

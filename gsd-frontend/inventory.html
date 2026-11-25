@@ -587,6 +587,8 @@
       .page-top-row,
       .toolbar-row,
       .actions-column-card,
+      .inv-actions-col,
+      .inv-actions-cell,
       .modal-backdrop,
       .logout-btn {
         display: none !important;
@@ -897,7 +899,7 @@
         </div>
       </div>
 
-      <!-- INVENTORY TABLE + SEPARATE ACTIONS PANEL -->
+      <!-- INVENTORY TABLE -->
       <div class="table-layout">
         <div class="main-table-card">
           <table class="inv-table" id="inventoryTable">
@@ -911,6 +913,7 @@
                 <th>UNIT</th>
                 <th>STATUS</th>
                 <th>DATE ADDED</th>
+                <th class="inv-actions-col" style="text-align: center;">ACTIONS</th>
               </tr>
             </thead>
             <tbody id="inventoryTableBody">
@@ -918,16 +921,47 @@
             </tbody>
           </table>
         </div>
-
-        <div class="actions-column-card" id="actionsColumnCard">
-          <div class="actions-header">ACTIONS</div>
-          <div id="actionsColumnBody">
-            <!-- Populated dynamically -->
-          </div>
-        </div>
       </div>
 
     </main>
+  </div>
+
+  <!-- EDIT PRODUCT MODAL -->
+  <div class="modal-backdrop" id="editProductModal">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="editProductModalTitle">
+      <h3 class="modal-title" id="editProductModalTitle">Edit Product Details</h3>
+      <form id="editProductForm">
+        <input type="hidden" id="editProductId" />
+        <div class="modal-field">
+          <label for="editProductName">Product Name</label>
+          <input type="text" id="editProductName" required />
+        </div>
+        <div class="modal-field">
+          <label for="editProductCategory">Category</label>
+          <input type="text" id="editProductCategory" list="editCategorySuggestions" required />
+          <datalist id="editCategorySuggestions">
+            <option value="Construction Materials"></option>
+            <option value="Electrical Supplies"></option>
+            <option value="Plumbing Supplies"></option>
+            <option value="Office Supplies"></option>
+            <option value="Janitorial Supplies"></option>
+            <option value="Hardware & Tools"></option>
+          </datalist>
+        </div>
+        <div class="modal-field">
+          <label for="editProductUnit">Unit</label>
+          <input type="text" id="editProductUnit" required />
+        </div>
+        <div class="modal-field">
+          <label for="editProductReorderPoint">Re-order Point</label>
+          <input type="number" id="editProductReorderPoint" min="0" step="1" required />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" id="cancelEditProductBtn">Cancel</button>
+          <button type="submit" class="btn-save">Save Changes</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>

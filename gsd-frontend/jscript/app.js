@@ -374,30 +374,40 @@ function gsdProductOptions(items) {
 }
 
 async function gsdInventoryPage() {
-  const items = await gsdGetInventory();
+  let items = await gsdGetInventory();
   const tbody = document.getElementById('inventoryTableBody');
-  const actions = document.getElementById('actionsColumnBody');
   const queryInput = document.getElementById('searchInput');
   const categorySelect = document.getElementById('categoryFilter');
-  const printSubtitle = document.getElementById('printReportSubtitle');
-  const lowStock = items.filter(item => Number(item.quantity) <= Number(item.reorder_point)).length;
-  const totalCount = document.getElementById('totalProductsKpi');
-  if (totalCount) totalCount.textContent = items.length;
-  const lowCount = document.getElementById('lowStockKpi');
-  if (lowCount) lowCount.textContent = lowStock;
-  const categories = [...new Set(items.map(item => item.category))].sort();
-  if (categorySelect) {
-    categorySelect.innerHTML = '<option value="All Categories">All Categories</option>' + categories.map(value => `<option value="${gsdEscape(value)}">${gsdEscape(value)}</option>`).join('');
-  }
   const monthSelect = document.getElementById('monthFilter');
+  const printSubtitle = document.getElementById('printReportSubtitle');
+  const editModal = document.getElementById('editProductModal');
+  const editForm = document.getElementById('editProductForm');
   const monthKey = item => String(item.created_at || '').slice(0, 7);
-  if (monthSelect) {
-    const months = [...new Set(items.map(monthKey).filter(Boolean))].sort().reverse();
-    monthSelect.innerHTML = '<option value="All Months">All Months</option>' + months.map(value => {
-      const label = new Date(`${value}-01T00:00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      return `<option value="${gsdEscape(value)}">${gsdEscape(label)}</option>`;
-    }).join('');
-  }
+
+  const syncMetaAndFilters = () => {
+    const lowStock = items.filter(item => Number(item.quantity) <= Number(item.reorder_point)).length;
+    const totalCount = document.getElementById('totalProductsKpi');
+    if (totalCount) totalCount.textContent = items.length;
+    const lowCount = document.getElementById('lowStockKpi');
+    if (lowCount) lowCount.textContent = lowStock;
+    const prevCategory = categorySelect?.value || 'All Categories';
+    const categories = [...new Set(items.map(item => item.category))].sort();
+    if (categorySelect) {
+      categorySelect.innerHTML = '<option value="All Categories">All Categories</option>' + categories.map(value => `<option value="${gsdEscape(value)}">${gsdEscape(value)}</option>`).join('');
+      categorySelect.value = categories.includes(prevCategory) ? prevCategory : 'All Categories';
+    }
+    const prevMonth = monthSelect?.value || 'All Months';
+    if (monthSelect) {
+      const months = [...new Set(items.map(monthKey).filter(Boolean))].sort().reverse();
+      monthSelect.innerHTML = '<option value="All Months">All Months</option>' + months.map(value => {
+        const label = new Date(`${value}-01T00:00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        return `<option value="${gsdEscape(value)}">${gsdEscape(label)}</option>`;
+      }).join('');
+      monthSelect.value = months.includes(prevMonth) ? prevMonth : 'All Months';
+    }
+  };
+  syncMetaAndFilters();
+
   let currentPage = 1;
   const pagination = gsdEnsurePagination('inventoryPagination', document.querySelector('.table-layout'));
   const getVisible = () => {
@@ -427,13 +437,95 @@ async function gsdInventoryPage() {
         <td>${gsdEscape(item.unit)}</td>
         <td><span class="badge ${Number(item.quantity) <= Number(item.reorder_point) ? 'badge-lowstock' : 'badge-instock'}">${Number(item.quantity) <= Number(item.reorder_point) ? 'Low Stock' : 'In Stock'}</span></td>
         <td>${gsdDisplayDate(item.created_at)}</td>
-      </tr>`).join('') : '<tr><td colspan="8" style="text-align:center;padding:24px;color:#68786f;">No inventory items match the current filters.</td></tr>';
+        <td class="inv-actions-cell"><div class="action-icons">
+          <button type="button" class="icon-btn icon-only" data-action="edit" data-id="${item.id}" title="Edit product" aria-label="Edit ${gsdEscape(item.name)}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+          </button>
+          <button type="button" class="icon-btn icon-only delete-btn" data-action="delete" data-id="${item.id}" title="Delete product" aria-label="Delete ${gsdEscape(item.name)}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </button>
+        </div></td>
+      </tr>`).join('') : '<tr><td colspan="9" style="text-align:center;padding:24px;color:#68786f;">No inventory items match the current filters.</td></tr>';
     currentPage = gsdRenderPagination(pagination, visible.length, currentPage, page => {
       currentPage = page;
       render();
     });
-    if (actions) actions.innerHTML = '<p>Stock adjustments are recorded through PO, SRF, and return transactions.</p>';
   };
+
+  const closeEditModal = () => editModal?.classList.remove('open');
+  document.getElementById('cancelEditProductBtn')?.addEventListener('click', closeEditModal);
+  editModal?.addEventListener('click', event => { if (event.target === editModal) closeEditModal(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && editModal?.classList.contains('open')) closeEditModal(); });
+
+  editForm?.addEventListener('submit', async event => {
+    event.preventDefault();
+    const id = document.getElementById('editProductId').value;
+    const submitBtn = editForm.querySelector('[type="submit"]');
+    submitBtn.disabled = true;
+    try {
+      await gsdRequest(`/inventory/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          name: document.getElementById('editProductName').value,
+          category: document.getElementById('editProductCategory').value,
+          unit: document.getElementById('editProductUnit').value,
+          reorder_point: document.getElementById('editProductReorderPoint').value
+        })
+      });
+      closeEditModal();
+      items = await gsdGetInventory();
+      syncMetaAndFilters();
+      render();
+      gsdToast('Product updated.');
+    } catch (error) {
+      gsdToast(error.message, true);
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+
+  tbody.addEventListener('click', async event => {
+    const button = event.target.closest('button[data-action]');
+    if (!button) return;
+    const item = items.find(row => row.id === Number(button.dataset.id));
+    if (!item) return;
+    if (button.dataset.action === 'edit') {
+      document.getElementById('editProductId').value = item.id;
+      document.getElementById('editProductName').value = item.name;
+      document.getElementById('editProductCategory').value = item.category;
+      document.getElementById('editProductUnit').value = item.unit;
+      document.getElementById('editProductReorderPoint').value = item.reorder_point ?? 7;
+      editModal?.classList.add('open');
+      document.getElementById('editProductName')?.focus();
+    } else if (button.dataset.action === 'delete') {
+      const confirmed = await gsdShowDialog({
+        title: 'Delete product?',
+        message: `Delete "${item.name}" and its transaction history? This cannot be undone.`,
+        confirmLabel: 'Delete',
+        cancelLabel: 'Cancel',
+        danger: true
+      });
+      if (!confirmed) return;
+      try {
+        await gsdRequest(`/inventory/${item.id}`, { method: 'DELETE' });
+        items = await gsdGetInventory();
+        syncMetaAndFilters();
+        render();
+        gsdToast('Product deleted.');
+      } catch (error) {
+        gsdToast(error.message, true);
+      }
+    }
+  });
+
   queryInput?.addEventListener('input', () => { currentPage = 1; render(); });
   categorySelect?.addEventListener('change', () => { currentPage = 1; render(); });
   monthSelect?.addEventListener('change', () => { currentPage = 1; render(); });
@@ -645,19 +737,28 @@ async function gsdReturnPage() {
     const details = {
       originalSrf: srfInput.value,
       returningOffice: officeInput.value,
-      department: document.getElementById('departmentInput').value,
+      location: document.getElementById('locationInput').value,
       resender: document.getElementById('resenderInput').value,
       receiver: document.getElementById('receiverInput').value,
       reason: document.getElementById('reasonInput').value
     };
     const date = txnDate();
     try {
+      const matchedItem = inventory.find(row => row.name.toLowerCase() === product.value.trim().toLowerCase());
       await gsdRequest('/transactions', { method: 'POST', body: JSON.stringify({
         type: 'RETURN', reference, itemName: product.value, quantity: document.getElementById('quantityReturnInput').value,
         unit: unitInput.value, office: details.returningOffice, notes: details.reason, details, date
       }) });
       hasActiveSlip = true;
-      gsdUpdatePrintSlip({ ...details, reference, itemName: product.value, quantity: document.getElementById('quantityReturnInput').value, unit: unitInput.value, date });
+      gsdUpdatePrintSlip({
+        ...details,
+        reference,
+        itemNo: matchedItem ? `PROD${String(matchedItem.id).padStart(4, '0')}` : '1',
+        itemName: product.value,
+        quantity: document.getElementById('quantityReturnInput').value,
+        unit: unitInput.value,
+        date
+      });
       gsdToast('Return slip recorded and stock restored.');
       form.reset();
       inventory = await gsdGetInventory();
@@ -685,17 +786,22 @@ async function gsdReturnPage() {
     else try { details = JSON.parse(latestReturn.metadata || '{}'); } catch { details = {}; }
     hasActiveSlip = true;
     gsdUpdatePrintSlip({
-      ...details, reference: latestReturn.reference, itemName: latestReturn.item_name,
-      quantity: latestReturn.quantity, unit: latestReturn.unit, date: latestReturn.occurred_on
+      ...details,
+      reference: latestReturn.reference,
+      itemNo: latestReturn.item_id ? `PROD${String(latestReturn.item_id).padStart(4, '0')}` : '1',
+      itemName: latestReturn.item_name,
+      quantity: latestReturn.quantity,
+      unit: latestReturn.unit,
+      date: latestReturn.occurred_on
     });
   } else {
-    gsdUpdatePrintSlip({ reference: '-', itemName: '-', quantity: 0, unit: '', date: '' });
+    gsdUpdatePrintSlip({ reference: '-', itemNo: '1', itemName: '-', quantity: 0, unit: '', date: '' });
   }
 }
 
 function gsdUpdatePrintSlip(data) {
   const slip = {
-    originalSrf: '-', returningOffice: '-', department: '-', resender: '-', receiver: '-', reason: '-',
+    originalSrf: '-', returningOffice: '-', location: '-', resender: '-', receiver: '-', reason: '-', itemNo: '1',
     ...data
   };
   const refText = slip.returningOffice && slip.returningOffice !== '-'
@@ -703,12 +809,20 @@ function gsdUpdatePrintSlip(data) {
     : slip.originalSrf;
   const qtyText = slip.quantity ? `${gsdFormatNumber(slip.quantity)} ${slip.unit}`.trim() : '-';
   const values = {
-    psSlipNo: slip.reference, psRefNo: refText, psDate: gsdDisplayDate(slip.date) || '-',
-    psResender: slip.resender, psDepartment: slip.department, psReceiver: slip.receiver,
-    psItemDesc: slip.itemName, psQty: slip.quantity ? gsdFormatNumber(slip.quantity) : '-', psUnit: slip.unit || '-', psRemarks: slip.reason,
+    psSlipNo: slip.reference,
+    psRefNo: refText,
+    psDate: gsdDisplayDate(slip.date) || '-',
+    psLocation: slip.location || slip.returningOffice || '-',
+    psItemNo: slip.itemNo || '1',
+    psItemDesc: slip.itemName,
+    psQty: slip.quantity ? gsdFormatNumber(slip.quantity) : '-',
+    psUnit: slip.unit || '-',
+    psRemarks: slip.reason,
     psTotalItems: slip.quantity ? 'TOTAL ITEMS: 1' : 'TOTAL ITEMS: 0',
     psTotalQty: `TOTAL QUANTITY RETURNED: ${qtyText}`,
-    psReasonBody: slip.reason, psSignResender: String(slip.resender || '-').toUpperCase(), psSignReceiver: String(slip.receiver || '-').toUpperCase()
+    psReasonBody: slip.reason,
+    psSignResender: String(slip.resender || '-').toUpperCase(),
+    psSignReceiver: String(slip.receiver || '-').toUpperCase()
   };
   Object.entries(values).forEach(([id, value]) => {
     const element = document.getElementById(id);
@@ -719,18 +833,18 @@ function gsdUpdatePrintSlip(data) {
 async function gsdRenderRecent(type, targetId) {
   const target = document.getElementById(targetId);
   if (!target) return;
-  const { transactions: rows } = await gsdRequest(`/transactions?type=${type}&limit=8`);
+  const { transactions: rows } = await gsdRequest(`/transactions?type=${type}&limit=20`);
   if (!rows.length) {
     target.innerHTML = '<p class="empty-state">No transactions recorded yet.</p>';
     return;
   }
   target.innerHTML = rows.map(row => `
-    <article class="recent-po-entry">
-      <strong>${gsdEscape(row.reference)}</strong>
-      <div>${gsdEscape(row.item_name)}</div>
-      <div>${gsdFormatNumber(row.quantity)} ${gsdEscape(row.unit)} · ${gsdDisplayDate(row.occurred_on)}</div>
-      ${row.office ? `<div>${gsdEscape(row.office)}</div>` : ''}
-      <small>${gsdEscape(row.actor_name || 'System')}</small>
+    <article class="recent-entry-card">
+      <div class="recent-entry-ref">${gsdEscape(row.reference)}</div>
+      <div class="recent-entry-product">${gsdEscape(row.item_name)}</div>
+      <div class="recent-entry-meta">${gsdFormatNumber(row.quantity)} ${gsdEscape(row.unit)} &middot; ${gsdDisplayDate(row.occurred_on)}</div>
+      ${row.office ? `<div class="recent-entry-office">Office: ${gsdEscape(row.office)}</div>` : ''}
+      <small class="recent-entry-actor">${gsdEscape(row.actor_name || 'System')}</small>
     </article>`).join('');
 }
 
@@ -744,8 +858,8 @@ async function gsdStockCardPage() {
   const set = (id, value) => { const element = document.getElementById(id); if (element) element.textContent = value; };
 
   const clearCardMeta = () => {
-    ['metaItemName', 'metaUnit', 'metaCurrentBalance', 'metaDescription', 'metaStockNo', 'metaReorderPoint',
-     'pscItemName', 'pscUnit', 'pscCurrentBalance', 'pscDescription', 'pscStockNo', 'pscReorderPoint'].forEach(id => set(id, '-'));
+    ['metaItemName', 'metaUnit', 'metaDescription', 'metaStockNo',
+     'pscItemName', 'pscUnit', 'pscDescription', 'pscStockNo'].forEach(id => set(id, '-'));
     ['poCount', 'srfCount', 'totalReceived', 'totalIssued'].forEach(id => set(id, '0'));
   };
 
@@ -799,10 +913,10 @@ async function gsdStockCardPage() {
       render(query);
     });
     const unitLabel = item.unit;
-    set('metaItemName', item.name); set('metaUnit', unitLabel); set('metaCurrentBalance', `${gsdFormatNumber(item.quantity)} ${unitLabel}`);
-    set('metaDescription', item.category); set('metaStockNo', `PROD${String(item.id).padStart(4, '0')}`); set('metaReorderPoint', gsdFormatNumber(item.reorder_point));
-    set('pscItemName', item.name); set('pscUnit', unitLabel); set('pscCurrentBalance', `${gsdFormatNumber(item.quantity)} ${unitLabel}`);
-    set('pscDescription', item.category); set('pscStockNo', `PROD${String(item.id).padStart(4, '0')}`); set('pscReorderPoint', gsdFormatNumber(item.reorder_point));
+    set('metaItemName', item.name); set('metaUnit', unitLabel);
+    set('metaDescription', item.category); set('metaStockNo', `PROD${String(item.id).padStart(4, '0')}`);
+    set('pscItemName', item.name); set('pscUnit', unitLabel);
+    set('pscDescription', item.category); set('pscStockNo', `PROD${String(item.id).padStart(4, '0')}`);
     set('poCount', transactions.filter(row => row.type === 'PO').length);
     set('srfCount', transactions.filter(row => row.type === 'SRF').length);
     set('totalReceived', gsdFormatNumber(received)); set('totalIssued', gsdFormatNumber(issued));
@@ -895,15 +1009,41 @@ function gsdSettingsPage() {
   });
 }
 
+function gsdGenerateTempPassword(length = 12) {
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lower = 'abcdefghijkmnopqrstuvwxyz';
+  const digits = '23456789';
+  const symbols = '!@#$%^&*_-+=';
+  const all = upper + lower + digits + symbols;
+  const pick = chars => {
+    const buf = new Uint32Array(1);
+    crypto.getRandomValues(buf);
+    return chars[buf[0] % chars.length];
+  };
+  const chars = [pick(upper), pick(lower), pick(digits), pick(symbols)];
+  while (chars.length < length) chars.push(pick(all));
+  for (let i = chars.length - 1; i > 0; i -= 1) {
+    const buf = new Uint32Array(1);
+    crypto.getRandomValues(buf);
+    const j = buf[0] % (i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join('');
+}
+
 async function gsdUserManagementPage(currentUser) {
   const table = document.getElementById('usersTableBody');
   const search = document.getElementById('userSearchInput');
   const form = document.getElementById('userForm');
   const modal = document.getElementById('userModal');
+  const resetModal = document.getElementById('passwordResetModal');
+  const resetSubtitle = document.getElementById('resetModalSubtitle');
+  const resetPasswordBox = document.getElementById('resetTempPasswordBox');
   const passField = document.getElementById('userPassword');
   const roleSelect = document.getElementById('userRoleSelect');
   let users = [];
   let currentPage = 1;
+  let lastGeneratedPassword = '';
   const pagination = gsdEnsurePagination('usersPagination', table.closest('.table-card'));
 
   if (roleSelect) roleSelect.innerHTML = '<option value="Staff" selected>Staff</option><option value="Admin">Admin</option>';
@@ -911,6 +1051,29 @@ async function gsdUserManagementPage(currentUser) {
   document.getElementById('editUserIndex')?.remove();
   document.getElementById('userStatusSelect')?.closest('.modal-field')?.remove();
   const requestsWrap = document.getElementById('resetRequestsWrap');
+  const closeResetModal = () => {
+    lastGeneratedPassword = '';
+    if (resetPasswordBox) resetPasswordBox.textContent = '-';
+    resetModal?.classList.remove('open');
+  };
+  document.getElementById('closeResetModalBtn')?.addEventListener('click', closeResetModal);
+  resetModal?.addEventListener('click', event => { if (event.target === resetModal) closeResetModal(); });
+  document.getElementById('copyTempPasswordBtn')?.addEventListener('click', async () => {
+    if (!lastGeneratedPassword) return;
+    try {
+      await navigator.clipboard.writeText(lastGeneratedPassword);
+      gsdToast('Temporary password copied to clipboard.');
+    } catch {
+      const range = document.createRange();
+      range.selectNodeContents(resetPasswordBox);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      document.execCommand('copy');
+      gsdToast('Temporary password copied to clipboard.');
+    }
+  });
+
   const renderUsers = () => {
     const query = search.value.trim().toLowerCase();
     const visible = users.filter(user => `${user.name} ${user.username} ${user.role} USR${String(user.id).padStart(4, '0')}`.toLowerCase().includes(query));
@@ -921,9 +1084,24 @@ async function gsdUserManagementPage(currentUser) {
       <td>USR${String(user.id).padStart(4, '0')}</td><td class="user-name-cell">${gsdEscape(user.name)}</td>
       <td>${gsdEscape(user.username)}</td><td>${gsdEscape(user.role)}</td><td><span class="status-pill ${user.status === 'Active' ? 'active-status' : 'inactive-status'}">${gsdEscape(user.status)}</span></td>
       <td class="actions-cell"><div class="action-icons">
-        <button type="button" class="icon-btn" data-action="password" data-id="${user.id}" title="Reset password">Reset password</button>
-        <button type="button" class="icon-btn" data-action="toggle" data-id="${user.id}" title="Toggle account status">${user.status === 'Active' ? 'Deactivate' : 'Activate'}</button>
-        ${user.id !== currentUser.id ? `<button type="button" class="icon-btn delete-btn" data-action="delete" data-id="${user.id}" title="Delete user">Delete</button>` : ''}
+        <button type="button" class="icon-btn icon-only" data-action="password" data-id="${user.id}" title="Reset password" aria-label="Reset password for ${gsdEscape(user.username)}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+          </svg>
+        </button>
+        <button type="button" class="icon-btn icon-only" data-action="toggle" data-id="${user.id}" title="${user.status === 'Active' ? 'Deactivate account' : 'Activate account'}" aria-label="${user.status === 'Active' ? 'Deactivate' : 'Activate'} ${gsdEscape(user.username)}">
+          ${user.status === 'Active'
+            ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>'
+            : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>'}
+        </button>
+        ${user.id !== currentUser.id ? `<button type="button" class="icon-btn icon-only delete-btn" data-action="delete" data-id="${user.id}" title="Delete user" aria-label="Delete ${gsdEscape(user.username)}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+        </button>` : ''}
       </div></td></tr>`).join('') : '<tr><td colspan="6" style="text-align:center;padding:24px;color:#68786f;">No matching user accounts.</td></tr>';
     currentPage = gsdRenderPagination(pagination, visible.length, currentPage, page => {
       currentPage = page;
@@ -945,7 +1123,11 @@ async function gsdUserManagementPage(currentUser) {
   const closeUserModal = () => modal?.classList.remove('open');
   document.getElementById('cancelUserModalBtn')?.addEventListener('click', closeUserModal);
   modal?.addEventListener('click', event => { if (event.target === modal) closeUserModal(); });
-  document.addEventListener('keydown', event => { if (event.key === 'Escape' && modal?.classList.contains('open')) closeUserModal(); });
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    if (modal?.classList.contains('open')) closeUserModal();
+    if (resetModal?.classList.contains('open')) closeResetModal();
+  });
   form.addEventListener('submit', async event => {
     event.preventDefault();
     const button = form.querySelector('[type="submit"]');
@@ -974,10 +1156,19 @@ async function gsdUserManagementPage(currentUser) {
     if (!target) return;
     try {
       if (button.dataset.action === 'password') {
-        const password = await gsdPromptPassword('Reset password', `Set a new password for ${target.username} (at least 10 characters).`);
-        if (password === null) return;
-        await gsdRequest(`/admin/users/${target.id}`, { method: 'PATCH', body: JSON.stringify({ password }) });
-        gsdToast('Password reset. Share the temporary password with the user securely.');
+        const confirmed = await gsdShowDialog({
+          title: 'Confirm Password Reset',
+          message: `Reset password for ${target.username}? A new temporary password will be generated and their current password will stop working.`,
+          confirmLabel: 'Reset Password',
+          cancelLabel: 'Cancel'
+        });
+        if (!confirmed) return;
+        const tempPassword = gsdGenerateTempPassword(12);
+        await gsdRequest(`/admin/users/${target.id}`, { method: 'PATCH', body: JSON.stringify({ password: tempPassword }) });
+        lastGeneratedPassword = tempPassword;
+        if (resetSubtitle) resetSubtitle.textContent = `Temporary password for ${target.username}`;
+        if (resetPasswordBox) resetPasswordBox.textContent = tempPassword;
+        resetModal?.classList.add('open');
       } else if (button.dataset.action === 'toggle') {
         await gsdRequest(`/admin/users/${target.id}`, { method: 'PATCH', body: JSON.stringify({ status: target.status === 'Active' ? 'Inactive' : 'Active' }) });
         gsdToast(`Account ${target.status === 'Active' ? 'deactivated' : 'activated'}.`);

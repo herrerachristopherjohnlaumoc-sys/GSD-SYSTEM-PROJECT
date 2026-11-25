@@ -198,6 +198,43 @@ app.get('/api/inventory', requireUser, route(async (req, res) => {
   }) });
 }));
 
+app.patch('/api/inventory/:id', requireUser, route(async (req, res) => {
+  const id = parsePositiveId(req.params.id, 'item ID');
+  const existing = await col.items.findOne({ id });
+  if (!existing) return res.status(404).json({ error: 'Inventory item not found.' });
+  const body = req.body || {};
+  const name = body.name !== undefined ? validateText(body.name, 'Product name') : existing.name;
+  const category = body.category !== undefined ? validateText(body.category, 'Category', 120) : existing.category;
+  const unit = body.unit !== undefined ? validateText(body.unit, 'Unit', 60) : existing.unit;
+  let reorderPoint = existing.reorder_point;
+  if (body.reorder_point !== undefined && body.reorder_point !== '') {
+    reorderPoint = Number(body.reorder_point);
+    if (!Number.isFinite(reorderPoint) || reorderPoint < 0) throw badRequest('Re-order point cannot be negative.');
+  }
+  const nameKey = name.toLowerCase();
+  if (nameKey !== existing.name_key && await col.items.findOne({ name_key: nameKey, id: { $ne: id } })) {
+    throw badRequest('Another inventory item already uses that product name.');
+  }
+  try {
+    await col.items.updateOne({ id }, { $set: { name, name_key: nameKey, category, unit, reorder_point: reorderPoint } });
+  } catch (error) {
+    if (error.code === 11000) throw badRequest('Another inventory item already uses that product name.');
+    throw error;
+  }
+  res.json({ item: strip(await col.items.findOne({ id })) });
+}));
+
+app.delete('/api/inventory/:id', requireUser, route(async (req, res) => {
+  const id = parsePositiveId(req.params.id, 'item ID');
+  const existing = await col.items.findOne({ id });
+  if (!existing) return res.status(404).json({ error: 'Inventory item not found.' });
+  await withTransaction(async session => {
+    await col.transactions.deleteMany({ item_id: id }, { session });
+    await col.items.deleteOne({ id }, { session });
+  });
+  res.json({ ok: true });
+}));
+
 app.get('/api/transactions', requireUser, route(async (req, res) => {
   const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 500);
   const filter = ['PO', 'SRF', 'RETURN', 'OPENING'].includes(req.query.type) ? { type: req.query.type } : {};
