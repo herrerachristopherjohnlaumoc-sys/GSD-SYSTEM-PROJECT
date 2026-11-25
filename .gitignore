@@ -3,5 +3,9 @@ gsd-backend/data/*.sqlite
 gsd-backend/data/*.sqlite-shm
 gsd-backend/data/*.sqlite-wal
 .env
+.env.*
+!.env.example
+*.log
+npm-debug.log*
 .claude
 DEPLOY.md

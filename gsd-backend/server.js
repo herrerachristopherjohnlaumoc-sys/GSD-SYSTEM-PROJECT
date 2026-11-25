@@ -2,12 +2,13 @@ const crypto = require('node:crypto');
 const path = require('node:path');
 const express = require('express');
 const helmet = require('helmet');
-const { client, col, connect, nextId, withTransaction, hashPassword, verifyPassword, timestamp } = require('./db');
+const { col, connect, ping, close, nextId, withTransaction, hashPassword, verifyPassword, timestamp } = require('./db');
 
 const app = express();
 const loginAttempts = new Map();
 const frontendDirectory = path.join(__dirname, '..', 'gsd-frontend');
 const port = Number(process.env.PORT || 3000);
+const host = process.env.HOST || '0.0.0.0';
 const sessionCookie = 'gsd_session';
 const sessionHours = 8;
 const production = process.env.NODE_ENV === 'production';
@@ -16,6 +17,10 @@ app.disable('x-powered-by');
 app.set('trust proxy', 1); // Render (and most hosts) terminate HTTPS at a proxy; needed for req.ip / secure cookies.
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: '1mb' }));
+app.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+});
 
 class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
@@ -25,6 +30,7 @@ const badRequest = message => new HttpError(400, message);
 // Wraps async handlers so thrown errors become JSON responses instead of unhandled rejections.
 const route = handler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(error => {
   if (error instanceof HttpError) return res.status(error.status).json({ error: error.message });
+  if (error?.code === 11000) return res.status(409).json({ error: 'A duplicate record already exists. Please refresh and try again.' });
   console.error(error);
   res.status(500).json({ error: 'Something went wrong on the server. Please try again.' });
 });
@@ -37,7 +43,13 @@ function publicUser(user) {
 }
 
 function parseCookies(header = '') {
+  if (!header) return {};
   return Object.fromEntries(header.split(';').map(part => part.trim().split(/=(.*)/s).slice(0, 2)).filter(([key]) => key));
+}
+
+function sessionCookieHeader(req, value, maxAgeSeconds) {
+  const secure = req.secure || (production && !['localhost', '127.0.0.1'].includes(req.hostname));
+  return `${sessionCookie}=${value}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}${secure ? '; Secure' : ''}`;
 }
 
 const tokenHash = token => crypto.createHash('sha256').update(token).digest('base64url');
@@ -71,6 +83,26 @@ function validateText(value, label, maxLength = 180) {
   return text;
 }
 
+function validatePassword(value, message = 'Password must be between 10 and 200 characters.') {
+  if (typeof value !== 'string' || !value.trim() || value.length < 10 || value.length > 200) {
+    throw badRequest(message);
+  }
+  return value;
+}
+
+function parsePositiveId(raw, label = 'ID') {
+  const id = Number(raw);
+  if (!Number.isInteger(id) || id <= 0) throw badRequest(`Invalid ${label}.`);
+  return id;
+}
+
+function pruneLoginAttempts(now) {
+  if (loginAttempts.size <= 500) return;
+  for (const [ip, entry] of loginAttempts) {
+    if (now - entry.startedAt >= 60_000) loginAttempts.delete(ip);
+  }
+}
+
 function dateValue(value) {
   const date = value ? String(value) : new Date().toISOString().slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))) {
@@ -100,13 +132,16 @@ async function userNames(ids) {
 
 app.post('/api/auth/login', route(async (req, res) => {
   const now = Date.now();
+  pruneLoginAttempts(now);
   const attempt = loginAttempts.get(req.ip);
   if (attempt && now - attempt.startedAt < 60_000 && attempt.count >= 10) {
     return res.status(429).json({ error: 'Too many sign-in attempts. Try again in one minute.' });
   }
   const username = String(req.body?.username || '').trim();
-  const password = String(req.body?.password || '');
-  const user = username ? await col.users.findOne({ username_key: username.toLowerCase() }) : null;
+  const password = typeof req.body?.password === 'string' ? req.body.password : '';
+  const user = username && password && password.length <= 500
+    ? await col.users.findOne({ username_key: username.toLowerCase() })
+    : null;
   if (!user || user.status !== 'Active' || !verifyPassword(password, user.password_hash)) {
     if (!attempt || now - attempt.startedAt >= 60_000) loginAttempts.set(req.ip, { startedAt: now, count: 1 });
     else attempt.count += 1;
@@ -115,13 +150,14 @@ app.post('/api/auth/login', route(async (req, res) => {
   loginAttempts.delete(req.ip);
   const token = crypto.randomBytes(32).toString('base64url');
   await col.sessions.insertOne({ _id: tokenHash(token), user_id: user.id, expires_at: new Date(now + sessionHours * 3600 * 1000) });
-  res.setHeader('Set-Cookie', `${sessionCookie}=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${sessionHours * 3600}${production ? '; Secure' : ''}`);
+  res.setHeader('Set-Cookie', sessionCookieHeader(req, token, sessionHours * 3600));
   res.json({ user: publicUser(user) });
 }));
 
-app.post('/api/auth/logout', requireUser, route(async (req, res) => {
-  await col.sessions.deleteOne({ _id: req.sessionId });
-  res.setHeader('Set-Cookie', `${sessionCookie}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0`);
+app.post('/api/auth/logout', route(async (req, res) => {
+  const found = await sessionUser(req);
+  if (found) await col.sessions.deleteOne({ _id: found.sessionId });
+  res.setHeader('Set-Cookie', sessionCookieHeader(req, '', 0));
   res.json({ ok: true });
 }));
 
@@ -205,18 +241,21 @@ app.post('/api/transactions', requireUser, route(async (req, res) => {
     }
     if (type === 'RETURN') {
       const originalSrf = validateText(details.originalSrf, 'Original SRF reference', 100);
-      const issue = await col.transactions.findOne({ item_id: item.id, type: 'SRF', reference_key: originalSrf.toLowerCase() }, { session });
-      if (!issue) throw badRequest('The original SRF was not found for this item.');
+      const issues = await col.transactions.find({ item_id: item.id, type: 'SRF', reference_key: originalSrf.toLowerCase() }, { session }).toArray();
+      if (!issues.length) throw badRequest('The original SRF was not found for this item.');
+      const earliestIssueDate = issues.reduce((earliest, row) => (!earliest || row.occurred_on < earliest ? row.occurred_on : earliest), '');
+      if (occurredOn < earliestIssueDate) throw badRequest('Return date cannot be earlier than the original SRF date.');
+      const issued = issues.reduce((sum, row) => sum + Number(row.quantity), 0);
       const returns = await col.transactions.find({ item_id: item.id, type: 'RETURN' }, { session }).toArray();
       const returned = returns
         .filter(row => String(row.metadata?.originalSrf || '').toLowerCase() === originalSrf.toLowerCase())
         .reduce((sum, row) => sum + Number(row.quantity), 0);
-      const remaining = Number(issue.quantity) - returned;
+      const remaining = issued - returned;
       if (quantity > remaining) throw badRequest(`Return exceeds unused quantity on the SRF. Returnable: ${remaining} ${item.unit}.`);
     }
     if (type === 'PO') {
-      const category = body.category ? validateText(body.category, 'Category', 120) : item.category;
-      const unit = body.unit ? validateText(body.unit, 'Unit', 40).toUpperCase() : item.unit;
+      const category = body.category && String(body.category).trim() ? validateText(body.category, 'Category', 120) : item.category;
+      const unit = body.unit && String(body.unit).trim() ? validateText(body.unit, 'Unit', 40).toUpperCase() : item.unit;
       await col.items.updateOne({ id: item.id }, { $set: { category, unit }, $inc: { quantity } }, { session });
     } else if (type === 'SRF') {
       // Conditional update: only succeeds when enough stock exists, so stock can never go negative.
@@ -226,9 +265,10 @@ app.post('/api/transactions', requireUser, route(async (req, res) => {
       await col.items.updateOne({ id: item.id }, { $inc: { quantity } }, { session });
     }
     const transactionId = await nextId('transactions', session);
+    const movementUnit = body.unit && String(body.unit).trim() ? String(body.unit).trim().toUpperCase().slice(0, 40) : item.unit;
     await col.transactions.insertOne({
       id: transactionId, item_id: item.id, type, reference, reference_key: reference.toLowerCase(), occurred_on: occurredOn,
-      quantity, unit_cost: unitCost, office, notes, metadata: { ...details, unit: body.unit ? String(body.unit).slice(0, 40) : item.unit },
+      quantity, unit_cost: unitCost, office, notes, metadata: { ...details, unit: movementUnit },
       actor_id: req.user.id, actor_name: req.user.name, created_at: timestamp()
     }, { session });
     const updatedItem = await col.items.findOne({ id: item.id }, { session, ...noId });
@@ -239,9 +279,23 @@ app.post('/api/transactions', requireUser, route(async (req, res) => {
 
 app.get('/api/stock-card', requireUser, route(async (req, res) => {
   const query = String(req.query.item || '').trim();
-  const filter = query ? { name_key: { $regex: escapeRegex(query.toLowerCase()) } } : {};
-  const items = await col.items.find(filter, noId).sort({ name_key: 1 }).toArray();
-  const item = items.find(row => row.name_key === query.toLowerCase()) || items[0] || null;
+  const queryLower = query.toLowerCase();
+  const filter = query ? { name_key: { $regex: escapeRegex(queryLower) } } : {};
+  let items = await col.items.find(filter, noId).sort({ name_key: 1 }).toArray();
+  if (query && !items.length) {
+    const codeMatch = query.match(/^PROD0*(\d+)$/i);
+    if (codeMatch) {
+      items = await col.items.find({ id: Number(codeMatch[1]) }, noId).toArray();
+    }
+    if (!items.length) {
+      const refMatches = await col.transactions.find({ reference_key: { $regex: escapeRegex(queryLower) } }, noId).sort({ occurred_on: -1, id: -1 }).limit(20).toArray();
+      const refItemIds = [...new Set(refMatches.map(row => row.item_id))];
+      if (refItemIds.length) {
+        items = await col.items.find({ id: { $in: refItemIds } }, noId).sort({ name_key: 1 }).toArray();
+      }
+    }
+  }
+  const item = items.find(row => row.name_key === queryLower) || items[0] || null;
   if (!item) return res.json({ item: null, transactions: [], matches: [] });
   const rows = await col.transactions.find({ item_id: item.id }, noId).sort({ occurred_on: 1, id: 1 }).toArray();
   const names = await userNames(rows.map(row => row.actor_id));
@@ -265,10 +319,9 @@ app.get('/api/admin/users', requireUser, requireAdmin, route(async (req, res) =>
 app.post('/api/admin/users', requireUser, requireAdmin, route(async (req, res) => {
   const name = validateText(req.body?.name, 'Name', 120);
   const username = validateText(req.body?.username, 'Username', 80);
-  const password = validateText(req.body?.password, 'Password', 200);
+  const password = validatePassword(req.body?.password);
   const role = req.body?.role;
   if (!['Admin', 'Staff'].includes(role)) throw badRequest('Role must be Admin or Staff.');
-  if (password.length < 10) throw badRequest('Password must be at least 10 characters.');
   if (await col.users.findOne({ username_key: username.toLowerCase() })) throw badRequest('That username is already in use.');
   const user = {
     id: await nextId('users'), name, username, username_key: username.toLowerCase(),
@@ -284,13 +337,13 @@ app.post('/api/admin/users', requireUser, requireAdmin, route(async (req, res) =
 }));
 
 app.patch('/api/admin/users/:id', requireUser, requireAdmin, route(async (req, res) => {
-  const id = Number(req.params.id);
+  const id = parsePositiveId(req.params.id, 'user ID');
   const user = await col.users.findOne({ id });
   if (!user) return res.status(404).json({ error: 'User not found.' });
   const { role, status, password } = req.body || {};
   if (role && !['Admin', 'Staff'].includes(role)) throw badRequest('Role must be Admin or Staff.');
   if (status && !['Active', 'Inactive'].includes(status)) throw badRequest('Status must be Active or Inactive.');
-  if (password && String(password).length < 10) throw badRequest('Password must be at least 10 characters.');
+  const validPassword = password !== undefined && password !== '' ? validatePassword(password) : null;
   if (user.id === req.user.id && status === 'Inactive') throw badRequest('You cannot deactivate your own account.');
   if (user.role === 'Admin' && user.status === 'Active' && (role === 'Staff' || status === 'Inactive') && await activeAdminCount() <= 1) {
     throw badRequest('At least one active administrator must remain.');
@@ -298,15 +351,15 @@ app.patch('/api/admin/users/:id', requireUser, requireAdmin, route(async (req, r
   const changes = {};
   if (role) changes.role = role;
   if (status) changes.status = status;
-  if (password) changes.password_hash = hashPassword(String(password));
+  if (validPassword) changes.password_hash = hashPassword(validPassword);
   if (Object.keys(changes).length) await col.users.updateOne({ id }, { $set: changes });
   // A password change or deactivation signs the user out everywhere (except the admin's own current session).
-  if (password || status === 'Inactive') await col.sessions.deleteMany({ user_id: id, _id: { $ne: req.sessionId } });
+  if (validPassword || status === 'Inactive') await col.sessions.deleteMany({ user_id: id, _id: { $ne: req.sessionId } });
   res.json({ user: publicUser(await col.users.findOne({ id })) });
 }));
 
 app.delete('/api/admin/users/:id', requireUser, requireAdmin, route(async (req, res) => {
-  const id = Number(req.params.id);
+  const id = parsePositiveId(req.params.id, 'user ID');
   const user = await col.users.findOne({ id });
   if (!user) return res.status(404).json({ error: 'User not found.' });
   if (id === req.user.id) throw badRequest('You cannot delete your own account.');
@@ -326,14 +379,13 @@ app.get('/api/admin/reset-requests', requireUser, requireAdmin, route(async (req
 app.patch('/api/admin/reset-requests/:id', requireUser, requireAdmin, route(async (req, res) => {
   const status = req.body?.status;
   if (!['Approved', 'Declined'].includes(status)) throw badRequest('Choose Approved or Declined.');
-  const requestId = Number(req.params.id);
+  const requestId = parsePositiveId(req.params.id, 'request ID');
   const request = await col.resetRequests.findOne({ id: requestId, status: 'Pending' });
   if (!request) return res.status(404).json({ error: 'Pending request not found.' });
   let account = null;
   let passwordHash = null;
   if (status === 'Approved') {
-    const password = String(req.body?.password || '');
-    if (password.length < 10) throw badRequest('Provide a temporary password of at least 10 characters.');
+    const password = validatePassword(req.body?.password, 'Provide a temporary password between 10 and 200 characters.');
     account = await col.users.findOne({ username_key: request.username.toLowerCase(), status: 'Active' });
     if (!account) throw badRequest('The account is no longer active.');
     passwordHash = hashPassword(password);
@@ -376,9 +428,21 @@ app.post('/api/admin/wipe', requireUser, requireAdmin, route(async (req, res) =>
 }));
 
 app.get('/api/health', route(async (req, res) => {
-  await client.db('admin').command({ ping: 1 });
+  await ping();
   res.json({ ok: true });
 }));
+
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found.' });
+});
+
+app.use((error, req, res, next) => {
+  if (error instanceof SyntaxError && error.status === 400 && 'body' in error) {
+    return res.status(400).json({ error: 'Invalid JSON request body.' });
+  }
+  console.error(error);
+  res.status(500).json({ error: 'Something went wrong on the server. Please try again.' });
+});
 
 // ---------- Pages ----------
 
@@ -386,7 +450,7 @@ app.get('/api/health', route(async (req, res) => {
 const protectedPages = new Set(['inventory.html', 'purchaseorder.html', 'stockout.html', 'stockcard.html', 'returnslip.html', 'settings.html', 'usermanagement.html']);
 const adminPages = new Set(['settings.html', 'usermanagement.html']);
 app.use(route(async (req, res, next) => {
-  const page = req.path.replace(/^\//, '').toLowerCase();
+  const page = req.path.replace(/^\/+|\/+$/g, '').toLowerCase();
   if (!protectedPages.has(page)) return next();
   const found = await sessionUser(req);
   if (!found) return res.redirect('/index.html');
@@ -398,11 +462,11 @@ app.use(express.static(frontendDirectory));
 app.get('*', (req, res) => res.sendFile(path.join(frontendDirectory, 'index.html')));
 
 connect().then(() => {
-  const server = app.listen(port, () => {
-    console.log(`GSD Inventory System listening on http://localhost:${port}`);
+  const server = app.listen(port, host, () => {
+    console.log(`GSD Inventory System listening on http://${host === '0.0.0.0' ? 'localhost' : host}:${port}`);
     if (!production) console.log('Demo accounts: gsd_admin / ChangeMe!2026 and gsd_staff / StaffPass!2026');
   });
-  const shutdown = () => server.close(() => client.close().finally(() => process.exit(0)));
+  const shutdown = () => server.close(() => close().finally(() => process.exit(0)));
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);
 }).catch(error => {

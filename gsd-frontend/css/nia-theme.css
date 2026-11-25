@@ -517,6 +517,9 @@ tbody td {
 .fund-badge {
   display: inline-flex;
   align-items: center;
+  padding: 3px 10px;
+  font-size: 11px;
+  border: 1px solid transparent;
   white-space: nowrap;
   border-radius: 999px;
   font-weight: 700;
@@ -556,13 +559,33 @@ tbody td {
 
 .toast,
 .toast-banner {
+  position: fixed;
+  right: 24px;
+  bottom: 22px;
+  z-index: 1200;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 12px 20px;
   border: 1px solid rgba(255,255,255,.2);
   border-radius: 7px;
   background: var(--nia-forest-deep);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
   box-shadow: 0 12px 30px rgba(16, 60, 43, .2);
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
 }
 
-.toast.error {
+.toast.show,
+.toast-banner.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.error,
+.toast-banner.error {
   background: #a74436;
 }
 
@@ -1286,10 +1309,23 @@ button:focus-visible {
 }
 
 @media print {
-  .gsd-pagination {
+  .gsd-pagination,
+  .toast,
+  .toast-banner,
+  dialog {
     display: none !important;
   }
+
+  .badge {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 }
+[hidden] { display: none !important; }
+.product-link { color: var(--nia-forest-deep); font-weight: 600; text-decoration: none; }
+.product-link:hover { text-decoration: underline; color: var(--nia-forest); }
+#resetRequestsWrap { margin-bottom: 22px; padding: 18px 20px; }
+#resetRequestsWrap h2 { margin-bottom: 12px; color: var(--nia-forest-deep); font: 800 16px 'Manrope', 'DM Sans', sans-serif; }
 /* Password reset request actions + password dialog form */
 .reset-requests-table .action-icons { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-start; }
 .reset-requests-table .icon-btn { width: auto; height: auto; min-height: 30px; padding: 4px 10px; border: 1px solid var(--nia-line); border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; }

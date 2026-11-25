@@ -88,6 +88,30 @@ async function run() {
     });
     assert.equal(result.response.status, 400);
     assert.match(result.data.error, /Return exceeds unused quantity/);
+    result = await request('/api/transactions', {
+      method: 'POST', cookie: adminCookie,
+      body: { type: 'RETURN', reference: 'RS-QA-EARLY', itemName: 'QA TEST ITEM', quantity: 1, unit: 'PCS', date: '2020-01-01', details: { originalSrf: 'SRF-QA-001' } }
+    });
+    assert.equal(result.response.status, 400);
+    assert.match(result.data.error, /earlier than the original SRF date/);
+
+    // Stock card lookup by reference and PROD code, plus API 404/400 JSON errors.
+    result = await request('/api/stock-card?item=SRF-QA-001', { cookie: adminCookie });
+    assert.equal(result.response.status, 200);
+    assert.equal(result.data.item.name, 'QA TEST ITEM');
+    result = await request(`/api/stock-card?item=PROD${String(result.data.item.id).padStart(4, '0')}`, { cookie: adminCookie });
+    assert.equal(result.response.status, 200);
+    assert.equal(result.data.item.name, 'QA TEST ITEM');
+    result = await request('/api/does-not-exist', { cookie: adminCookie });
+    assert.equal(result.response.status, 404);
+    assert.ok(result.data?.error);
+    const badJsonResponse = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{invalid-json'
+    });
+    assert.equal(badJsonResponse.status, 400);
+    assert.ok((await badJsonResponse.json())?.error);
 
     result = await request('/api/auth/reset-requests', {
       method: 'POST', body: { username: 'gsd_staff', reason: 'Integration test of controlled password reset.' }
@@ -159,6 +183,8 @@ async function run() {
     const temporaryUserId = result.data.user.id;
     result = await request(`/api/admin/users/${temporaryUserId}`, { method: 'DELETE', cookie: adminCookie });
     assert.equal(result.response.status, 200);
+    result = await request('/api/admin/users/abc', { method: 'PATCH', cookie: adminCookie, body: { status: 'Inactive' } });
+    assert.equal(result.response.status, 400);
     result = await request('/api/admin/users/1', { method: 'DELETE', cookie: adminCookie });
     assert.equal(result.response.status, 400);
     result = await request('/api/admin/wipe', { method: 'POST', cookie: adminCookie, body: { confirmation: 'NO' } });
@@ -168,7 +194,13 @@ async function run() {
     result = await request('/api/inventory', { cookie: adminCookie });
     assert.equal(result.data.items.length, 0);
 
-    console.log('PASS: movement balances, return limits, user lifecycle, reset approval, Staff denial, page guards, dated movements, backup, and confirmed wipe');
+    // Logout clears session.
+    result = await request('/api/auth/logout', { method: 'POST', cookie: staffCookie, body: {} });
+    assert.equal(result.response.status, 200);
+    result = await request('/api/auth/me', { cookie: staffCookie });
+    assert.equal(result.data.user, null);
+
+    console.log('PASS: movement balances, return limits, user lifecycle, reset approval, Staff denial, page guards, dated movements, backup, confirmed wipe, and logout');
   } finally {
     child.kill();
     if (child.exitCode === null) await new Promise(resolve => child.once('exit', resolve));

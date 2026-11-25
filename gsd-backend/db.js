@@ -14,12 +14,20 @@ const { MongoClient } = require('mongodb');
 //   counters                 { _id: collection name, seq }
 //   app_meta                 { _id: key, value }
 
-if (!process.env.MONGODB_URI) {
-  throw new Error('Set MONGODB_URI to your MongoDB connection string (for example your MongoDB Atlas SRV URI).');
+const client = process.env.MONGODB_URI
+  ? new MongoClient(process.env.MONGODB_URI, {
+      appName: 'gsd-inventory',
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      maxPoolSize: 10
+    })
+  : null;
+if (client) {
+  client.on('error', error => console.error('MongoDB client error:', error.message));
 }
-
-const client = new MongoClient(process.env.MONGODB_URI, { appName: 'gsd-inventory' });
 const col = {};
+let activeDb = null;
 
 function timestamp(date = new Date()) {
   return date.toISOString().replace('T', ' ').slice(0, 19);
@@ -32,11 +40,17 @@ function hashPassword(password) {
 }
 
 function verifyPassword(password, storedHash) {
-  const [saltText, hashText] = String(storedHash || '').split(':');
-  if (!saltText || !hashText) return false;
-  const expected = Buffer.from(hashText, 'base64url');
-  const actual = crypto.scryptSync(password, Buffer.from(saltText, 'base64url'), expected.length);
-  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+  try {
+    const [saltText, hashText] = String(storedHash || '').split(':');
+    if (!saltText || !hashText) return false;
+    const salt = Buffer.from(saltText, 'base64url');
+    const expected = Buffer.from(hashText, 'base64url');
+    if (!salt.length || !expected.length) return false;
+    const actual = crypto.scryptSync(password, salt, expected.length);
+    return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+  } catch {
+    return false;
+  }
 }
 
 async function nextId(name, session) {
@@ -107,8 +121,12 @@ async function seed() {
 }
 
 async function connect() {
+  if (!client) {
+    throw new Error('Set MONGODB_URI to your MongoDB connection string (for example your MongoDB Atlas SRV URI).');
+  }
   await client.connect();
   const db = client.db(process.env.MONGODB_DB || 'gsd');
+  activeDb = db;
   Object.assign(col, {
     users: db.collection('users'),
     items: db.collection('inventory_items'),
@@ -126,11 +144,26 @@ async function connect() {
     col.transactions.createIndex({ id: 1 }, { unique: true }),
     col.transactions.createIndex({ item_id: 1, occurred_on: 1, id: 1 }),
     col.transactions.createIndex({ type: 1, occurred_on: -1, id: -1 }),
+    col.transactions.createIndex({ reference_key: 1 }),
     col.resetRequests.createIndex({ id: 1 }, { unique: true }),
-    col.sessions.createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 })
+    col.resetRequests.createIndex({ status: 1, created_at: -1, id: -1 }),
+    col.sessions.createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 }),
+    col.sessions.createIndex({ user_id: 1 }),
+    ...['users', 'inventory_items', 'transactions', 'password_reset_requests'].map(name =>
+      col.counters.updateOne({ _id: name }, { $setOnInsert: { seq: 0 } }, { upsert: true })
+    )
   ]);
   await seed();
   return db;
 }
 
-module.exports = { client, col, connect, nextId, withTransaction, hashPassword, verifyPassword, timestamp };
+async function ping() {
+  if (!activeDb) throw new Error('Database is not connected.');
+  await activeDb.command({ ping: 1 });
+}
+
+async function close() {
+  if (client) await client.close();
+}
+
+module.exports = { client, col, connect, ping, close, nextId, withTransaction, hashPassword, verifyPassword, timestamp };

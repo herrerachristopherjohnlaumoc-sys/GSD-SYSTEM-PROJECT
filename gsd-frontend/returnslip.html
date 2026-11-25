@@ -602,8 +602,8 @@
   <header class="topbar">
     <div class="topbar-title">GENERAL SERVICE DIVISION</div>
     <div class="user-info">
-      <div class="user-name" id="headerUserName">CHRISTOPHER JOHN L. HERRERA</div>
-      <div class="user-role" id="headerUserRole">ADMINISTRATOR</div>
+      <div class="user-name" id="headerUserName">-</div>
+      <div class="user-role" id="headerUserRole">-</div>
     </div>
   </header>
 
@@ -889,16 +889,16 @@
 
       <table class="ps-meta-table">
         <tr>
-          <td><span class="ps-meta-label">RETURN SLIP NO.:</span> <span id="psSlipNo">RS-2026-001</span></td>
-          <td><span class="ps-meta-label">REFERENCE NO.:</span> <span id="psRefNo">SRF # 817 (OCBS)</span></td>
+          <td><span class="ps-meta-label">RETURN SLIP NO.:</span> <span id="psSlipNo">-</span></td>
+          <td><span class="ps-meta-label">REFERENCE NO.:</span> <span id="psRefNo">-</span></td>
         </tr>
         <tr>
-          <td><span class="ps-meta-label">DATE OF RETURN:</span> <span id="psDate">06/10/2026</span></td>
-          <td><span class="ps-meta-label">RESENDER (RETURNED BY):</span> <span id="psResender">John Doe</span></td>
+          <td><span class="ps-meta-label">DATE OF RETURN:</span> <span id="psDate">-</span></td>
+          <td><span class="ps-meta-label">RESENDER (RETURNED BY):</span> <span id="psResender">-</span></td>
         </tr>
         <tr>
-          <td><span class="ps-meta-label">DEPARTMENT / OFFICE:</span> <span id="psDepartment">General Services Department</span></td>
-          <td><span class="ps-meta-label">RECEIVER (RECEIVED BY):</span> <span id="psReceiver">Christopher John L. Herrera</span></td>
+          <td><span class="ps-meta-label">DEPARTMENT / OFFICE:</span> <span id="psDepartment">-</span></td>
+          <td><span class="ps-meta-label">RECEIVER (RECEIVED BY):</span> <span id="psReceiver">-</span></td>
         </tr>
       </table>
 
@@ -915,10 +915,10 @@
         <tbody>
           <tr>
             <td class="center">1</td>
-            <td id="psItemDesc">0.18M X 1.22M X 4MM THK VINYL TILES</td>
-            <td class="center" id="psQty">30</td>
-            <td class="center" id="psUnit">PCS</td>
-            <td id="psRemarks">Excess unused materials from project</td>
+            <td id="psItemDesc">-</td>
+            <td class="center" id="psQty">-</td>
+            <td class="center" id="psUnit">-</td>
+            <td id="psRemarks">-</td>
           </tr>
           <tr>
             <td></td><td></td><td></td><td></td><td></td>
@@ -930,15 +930,15 @@
             <td></td><td></td><td></td><td></td><td></td>
           </tr>
           <tr class="ps-totals-row">
-            <td colspan="2" id="psTotalItems">TOTAL ITEMS: 1</td>
-            <td colspan="3" id="psTotalQty">TOTAL QUANTITY RETURNED: 30 PCS</td>
+            <td colspan="2" id="psTotalItems">TOTAL ITEMS: 0</td>
+            <td colspan="3" id="psTotalQty">TOTAL QUANTITY RETURNED: -</td>
           </tr>
         </tbody>
       </table>
 
       <div class="ps-reason-box">
         <div class="ps-reason-header">REASON FOR RETURN:</div>
-        <div class="ps-reason-body" id="psReasonBody">Excess unused materials from project</div>
+        <div class="ps-reason-body" id="psReasonBody">-</div>
       </div>
 
       <table class="ps-sign-table">
@@ -952,12 +952,12 @@
         <tbody>
           <tr>
             <td>
-              <div class="ps-sign-name" id="psSignResender">JOHN DOE</div>
+              <div class="ps-sign-name" id="psSignResender">-</div>
               <div class="ps-sign-role">Resender / Personnel</div>
               <div class="ps-sign-date">Date: ______________</div>
             </td>
             <td>
-              <div class="ps-sign-name" id="psSignReceiver">CHRISTOPHER JOHN L. HERRERA</div>
+              <div class="ps-sign-name" id="psSignReceiver">-</div>
               <div class="ps-sign-role">Receiver / GSD Personnel</div>
               <div class="ps-sign-date">Date: ______________</div>
             </td>
@@ -981,305 +981,6 @@
 
   <!-- TOAST FEEDBACK -->
   <div id="toast" class="toast"></div>
-
-  <script type="application/json">
-    const STORAGE_KEYS = {
-      INVENTORY: 'gsd_inventory',
-      TRANSACTIONS: 'gsd_transactions',
-      RECENT_RETURN_SLIP: 'gsd_recent_return_slip',
-      CURRENT_USER: 'gsd_current_user'
-    };
-
-    const DEFAULT_RECENT_SLIP = {
-      slipNumber: 'RS-2026-001',
-      productName: '0.18M X 1.22M X 4MM THK VINYL TILES',
-      quantity: 30,
-      unit: 'PCS',
-      originalSrf: 'SRF # 817',
-      returningOffice: 'OCBS',
-      department: 'General Services Department',
-      resender: 'John Doe',
-      receiver: 'Christopher John L. Herrera',
-      reason: 'Excess unused materials from project',
-      date: '06/10/2026'
-    };
-
-    const returnSlipForm = document.getElementById('returnSlipForm');
-    const originalSrfInput = document.getElementById('originalSrfInput');
-    const productNameInput = document.getElementById('productNameInput');
-    const returningOfficeInput = document.getElementById('returningOfficeInput');
-    const departmentInput = document.getElementById('departmentInput');
-    const resenderInput = document.getElementById('resenderInput');
-    const receiverInput = document.getElementById('receiverInput');
-    const quantityReturnInput = document.getElementById('quantityReturnInput');
-    const unitInput = document.getElementById('unitInput');
-    const reasonInput = document.getElementById('reasonInput');
-
-    const srfReferenceList = document.getElementById('srfReferenceList');
-    const returnProductList = document.getElementById('returnProductList');
-    const recentSlipContainer = document.getElementById('recentSlipContainer');
-    const clearFormBtn = document.getElementById('clearFormBtn');
-    const printSlipBtn = document.getElementById('printSlipBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const toastEl = document.getElementById('toast');
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = String(text ?? '');
-      return div.innerHTML;
-    }
-
-    function getFormattedDate() {
-      const now = new Date();
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const dd = String(now.getDate()).padStart(2, '0');
-      const yyyy = now.getFullYear();
-      return `${mm}/${dd}/${yyyy}`;
-    }
-
-    function showToast(message, isError = false) {
-      toastEl.textContent = message;
-      toastEl.classList.toggle('error', isError);
-      toastEl.classList.add('show');
-      setTimeout(() => {
-        toastEl.classList.remove('show');
-      }, 3200);
-    }
-
-    function getInventory() {
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.INVENTORY) || '[]');
-    }
-
-    function saveInventory(items) {
-      localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(items));
-    }
-
-    function getTransactions() {
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.TRANSACTIONS) || '[]');
-    }
-
-    function saveTransactions(logs) {
-      localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(logs));
-    }
-
-    function populateSuggestions() {
-      const inventory = getInventory();
-      const transactions = getTransactions();
-
-      returnProductList.innerHTML = '';
-      inventory.forEach(item => {
-        const opt = document.createElement('option');
-        opt.value = item.productName;
-        returnProductList.appendChild(opt);
-      });
-
-      const srfRefs = new Set();
-      transactions.forEach(t => {
-        if (t.type === 'OUT' && t.reference) {
-          srfRefs.add(t.reference);
-        }
-      });
-
-      srfReferenceList.innerHTML = '';
-      srfRefs.forEach(ref => {
-        const opt = document.createElement('option');
-        opt.value = ref;
-        srfReferenceList.appendChild(opt);
-      });
-    }
-
-    originalSrfInput.addEventListener('input', () => {
-      const refVal = originalSrfInput.value.trim().toLowerCase();
-      if (!refVal) return;
-
-      const txns = getTransactions();
-      const match = txns.find(t => t.type === 'OUT' && (t.reference || '').toLowerCase() === refVal);
-      if (match) {
-        if (match.productName && !productNameInput.value) productNameInput.value = match.productName;
-        if (match.office && !returningOfficeInput.value) returningOfficeInput.value = match.office;
-        if (match.unit && !unitInput.value) unitInput.value = match.unit;
-      }
-    });
-
-    productNameInput.addEventListener('input', () => {
-      const prodVal = productNameInput.value.trim().toLowerCase();
-      if (!prodVal) return;
-
-      const inv = getInventory();
-      const match = inv.find(i => (i.productName || '').toLowerCase() === prodVal);
-      if (match && match.unit && !unitInput.value) {
-        unitInput.value = match.unit;
-      }
-    });
-
-    function generateNextSlipNumber() {
-      const txns = getTransactions();
-      const returnCount = txns.filter(t => t.type === 'RETURN').length + 2;
-      const year = new Date().getFullYear();
-      return `RS-${year}-${String(returnCount).padStart(3, '0')}`;
-    }
-
-    function syncPrintSheet(slip) {
-      const refCombined = slip.returningOffice
-        ? `${slip.originalSrf} (${slip.returningOffice})`
-        : slip.originalSrf;
-
-      document.getElementById('psSlipNo').textContent = slip.slipNumber || '';
-      document.getElementById('psRefNo').textContent = refCombined || '';
-      document.getElementById('psDate').textContent = slip.date || '';
-      document.getElementById('psResender').textContent = slip.resender || '';
-      document.getElementById('psDepartment').textContent = slip.department || '';
-      document.getElementById('psReceiver').textContent = slip.receiver || '';
-
-      document.getElementById('psItemDesc').textContent = slip.productName || '';
-      document.getElementById('psQty').textContent = slip.quantity ?? '';
-      document.getElementById('psUnit').textContent = slip.unit || '';
-      document.getElementById('psRemarks').textContent = slip.reason || '';
-
-      document.getElementById('psTotalItems').textContent = 'TOTAL ITEMS: 1';
-      document.getElementById('psTotalQty').textContent = `TOTAL QUANTITY RETURNED: ${slip.quantity ?? 0} ${slip.unit || ''}`.trim();
-      document.getElementById('psReasonBody').textContent = slip.reason || '';
-
-      document.getElementById('psSignResender').textContent = (slip.resender || '').toUpperCase();
-      document.getElementById('psSignReceiver').textContent = (slip.receiver || '').toUpperCase();
-    }
-
-    function renderRecentSlip() {
-      let slip = JSON.parse(localStorage.getItem(STORAGE_KEYS.RECENT_RETURN_SLIP) || 'null');
-      if (!slip) {
-        slip = DEFAULT_RECENT_SLIP;
-        localStorage.setItem(STORAGE_KEYS.RECENT_RETURN_SLIP, JSON.stringify(slip));
-      }
-
-      recentSlipContainer.innerHTML = `
-        <div class="recent-slip-num">Return Slip #: <strong>${escapeHtml(slip.slipNumber)}</strong></div>
-        <div class="recent-slip-product">${escapeHtml(slip.productName)}</div>
-        <div>Returned Qty: ${escapeHtml(slip.quantity)} ${escapeHtml(slip.unit)}</div>
-        <div>From Ref: ${escapeHtml(slip.originalSrf)} (${escapeHtml(slip.returningOffice)})</div>
-        <div>Department: ${escapeHtml(slip.department)}</div>
-        <div>Resender: ${escapeHtml(slip.resender)} | Receiver: ${escapeHtml(slip.receiver)}</div>
-        <div>Reason: ${escapeHtml(slip.reason)}</div>
-        <div class="recent-slip-date">${escapeHtml(slip.date)}</div>
-      `;
-
-      syncPrintSheet(slip);
-    }
-
-    returnSlipForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      const originalSrf = originalSrfInput.value.trim();
-      const productName = productNameInput.value.trim().toUpperCase();
-      const returningOffice = returningOfficeInput.value.trim().toUpperCase();
-      const department = departmentInput.value.trim();
-      const resender = resenderInput.value.trim();
-      const receiver = receiverInput.value.trim();
-      const quantity = parseInt(quantityReturnInput.value, 10);
-      const unit = unitInput.value.trim().toUpperCase();
-      const reason = reasonInput.value.trim();
-
-      if (!originalSrf || !productName || !returningOffice || !department || !resender || !receiver || isNaN(quantity) || quantity <= 0 || !unit || !reason) {
-        showToast('Please complete all required fields.', true);
-        return;
-      }
-
-      const dateStr = getFormattedDate();
-      const slipNumber = generateNextSlipNumber();
-
-      const inventory = getInventory();
-      const idx = inventory.findIndex(i => (i.productName || '').toLowerCase() === productName.toLowerCase());
-      let newBalance = quantity;
-
-      if (idx > -1) {
-        inventory[idx].quantity = Number(inventory[idx].quantity) + quantity;
-        inventory[idx].unit = unit;
-        inventory[idx].lastUpdated = dateStr;
-        newBalance = inventory[idx].quantity;
-      } else {
-        inventory.push({
-          id: 'ITEM-' + Date.now(),
-          productName: productName,
-          category: 'Construction Materials',
-          unit: unit,
-          quantity: quantity,
-          unitCost: 0,
-          dateAdded: dateStr
-        });
-      }
-      saveInventory(inventory);
-
-      const transactions = getTransactions();
-      transactions.unshift({
-        id: 'TXN-' + Date.now(),
-        type: 'RETURN',
-        reference: `${slipNumber} (${originalSrf})`,
-        productName: productName,
-        office: returningOffice,
-        department: department,
-        resender: resender,
-        receiver: receiver,
-        reason: reason,
-        unit: unit,
-        quantity: quantity,
-        balance: newBalance,
-        date: dateStr,
-        recordedBy: receiver
-      });
-      saveTransactions(transactions);
-
-      const slipData = {
-        slipNumber,
-        productName,
-        quantity,
-        unit,
-        originalSrf,
-        returningOffice,
-        department,
-        resender,
-        receiver,
-        reason,
-        date: dateStr
-      };
-      localStorage.setItem(STORAGE_KEYS.RECENT_RETURN_SLIP, JSON.stringify(slipData));
-
-      renderRecentSlip();
-      populateSuggestions();
-      returnSlipForm.reset();
-      showToast(`Restocked ${quantity} ${unit} of ${productName} via ${slipNumber}.`);
-    });
-
-    clearFormBtn.addEventListener('click', () => {
-      returnSlipForm.reset();
-      originalSrfInput.focus();
-    });
-
-    printSlipBtn.addEventListener('click', () => {
-      const slip = JSON.parse(localStorage.getItem(STORAGE_KEYS.RECENT_RETURN_SLIP) || 'null') || DEFAULT_RECENT_SLIP;
-      syncPrintSheet(slip);
-      window.print();
-    });
-
-    logoutBtn.addEventListener('click', () => {
-      if (confirm('Are you sure you want to logout?')) {
-        window.location.href = 'index.html';
-      }
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const savedUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_USER) || 'null');
-      if (savedUser) {
-        if (savedUser.displayName) {
-          document.getElementById('headerUserName').textContent = savedUser.displayName.toUpperCase();
-        }
-        if (savedUser.role) {
-          document.getElementById('headerUserRole').textContent = savedUser.role.toUpperCase();
-        }
-      }
-
-      populateSuggestions();
-      renderRecentSlip();
-    });
-  </script>
   <script src="jscript/app.js" defer></script>
 </body>
 </html>

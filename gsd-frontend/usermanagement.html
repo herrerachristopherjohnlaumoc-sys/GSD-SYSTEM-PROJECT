@@ -536,8 +536,8 @@
   <header class="topbar">
     <div class="topbar-title">GENERAL SERVICE DIVISION</div>
     <div class="user-info">
-      <div class="user-name" id="headerUserName">CHRISTOPHER JOHN L. HERRERA</div>
-      <div class="user-role" id="headerUserRole">ADMINISTRATOR</div>
+      <div class="user-name" id="headerUserName">-</div>
+      <div class="user-role" id="headerUserRole">-</div>
     </div>
   </header>
 
@@ -648,7 +648,7 @@
             </svg>
           </div>
           <div class="kpi-label">ACTIVE USERS</div>
-          <div class="kpi-value" id="activeUsersKpi">6</div>
+          <div class="kpi-value" id="activeUsersKpi">0</div>
         </div>
 
         <div class="kpi-card">
@@ -661,7 +661,7 @@
             </svg>
           </div>
           <div class="kpi-label">TOTAL USERS</div>
-          <div class="kpi-value" id="totalUsersKpi">6</div>
+          <div class="kpi-value" id="totalUsersKpi">0</div>
         </div>
       </div>
 
@@ -731,7 +731,6 @@
     <div class="modal-box">
       <h3 class="modal-title" id="userModalTitle">Create User Account</h3>
       <form id="userForm">
-        <input type="hidden" id="editUserIndex" />
         <div class="modal-field">
           <label for="userFullName">Full Name</label>
           <input type="text" id="userFullName" placeholder="e.g. Juan Dela Cruz" required />
@@ -742,21 +741,13 @@
         </div>
         <div class="modal-field">
           <label for="userPassword">Initial Password</label>
-          <input type="password" id="userPassword" minlength="10" autocomplete="new-password" required />
+          <input type="password" id="userPassword" minlength="10" maxlength="200" autocomplete="new-password" required />
         </div>
         <div class="modal-field">
           <label for="userRoleSelect">Role</label>
           <select id="userRoleSelect" required>
-            <option value="Administrator">Administrator</option>
-            <option value="Admin">Admin</option>
             <option value="Staff" selected>Staff</option>
-          </select>
-        </div>
-        <div class="modal-field">
-          <label for="userStatusSelect">Status</label>
-          <select id="userStatusSelect" required>
-            <option value="Active" selected>Active</option>
-            <option value="Inactive">Inactive</option>
+            <option value="Admin">Admin</option>
           </select>
         </div>
         <div class="modal-actions">
@@ -768,244 +759,6 @@
   </div>
 
   <div id="toast" class="toast"></div>
-
-  <script type="application/json">
-    const STORAGE_KEYS = {
-      USERS: 'gsd_users',
-      CURRENT_USER: 'gsd_current_user'
-    };
-
-    const SEED_USERS = [
-      { id: 'USR01', name: 'Christopher John L. Herrera', username: 'gsd_admin', role: 'Administrator', status: 'Active' },
-      { id: 'USR02', name: 'Thess Tragura', username: 'Tragura', role: 'Admin', status: 'Active' },
-      { id: 'USR03', name: 'Jemar Penilla', username: 'Jemar', role: 'Admin', status: 'Active' },
-      { id: 'USR04', name: 'Jonas Formilleza', username: 'Jonas', role: 'Staff', status: 'Active' },
-      { id: 'USR05', name: 'Marites Corrales', username: 'Marites', role: 'Staff', status: 'Active' },
-      { id: 'USR06', name: 'Jasha Bangcore', username: 'Jasha', role: 'Staff', status: 'Active' }
-    ];
-
-    const usersTableBody = document.getElementById('usersTableBody');
-    const activeUsersKpi = document.getElementById('activeUsersKpi');
-    const totalUsersKpi = document.getElementById('totalUsersKpi');
-    const userSearchInput = document.getElementById('userSearchInput');
-    const createUserBtn = document.getElementById('createUserBtn');
-
-    const userModal = document.getElementById('userModal');
-    const userModalTitle = document.getElementById('userModalTitle');
-    const userForm = document.getElementById('userForm');
-    const editUserIndex = document.getElementById('editUserIndex');
-    const userFullName = document.getElementById('userFullName');
-    const userAccountName = document.getElementById('userAccountName');
-    const userRoleSelect = document.getElementById('userRoleSelect');
-    const userStatusSelect = document.getElementById('userStatusSelect');
-    const cancelUserModalBtn = document.getElementById('cancelUserModalBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const toastEl = document.getElementById('toast');
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = String(text ?? '');
-      return div.innerHTML;
-    }
-
-    function showToast(msg) {
-      toastEl.textContent = msg;
-      toastEl.classList.add('show');
-      setTimeout(() => toastEl.classList.remove('show'), 2800);
-    }
-
-    function getUsers() {
-      let stored = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || 'null');
-      if (!Array.isArray(stored) || stored.length === 0) {
-        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(SEED_USERS));
-        stored = [...SEED_USERS];
-      }
-      return stored;
-    }
-
-    function saveUsers(users) {
-      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-    }
-
-    function generateNextUserId(users) {
-      const maxNum = users.reduce((max, u) => {
-        const match = String(u.id || '').match(/(\d+)$/);
-        const num = match ? parseInt(match[1], 10) : 0;
-        return Math.max(max, num);
-      }, 0);
-      return `USR${String(maxNum + 1).padStart(2, '0')}`;
-    }
-
-    function renderUsers() {
-      const allUsers = getUsers();
-      const query = userSearchInput.value.trim().toLowerCase();
-
-      const activeCount = allUsers.filter(u => u.status === 'Active').length;
-      activeUsersKpi.textContent = String(activeCount);
-      totalUsersKpi.textContent = String(allUsers.length);
-
-      const filtered = allUsers.filter(u =>
-        !query ||
-        (u.id || '').toLowerCase().includes(query) ||
-        (u.name || '').toLowerCase().includes(query) ||
-        (u.username || '').toLowerCase().includes(query) ||
-        (u.role || '').toLowerCase().includes(query)
-      );
-
-      if (filtered.length === 0) {
-        usersTableBody.innerHTML = `
-          <tr>
-            <td colspan="6" style="text-align:center; padding:24px; color:#6f7c74;">
-              No user accounts found matching your search.
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      usersTableBody.innerHTML = filtered.map(u => {
-        const realIdx = allUsers.findIndex(item => item.id === u.id && item.username === u.username);
-        const isActive = u.status === 'Active';
-        const pillClass = isActive ? 'active-status' : 'inactive-status';
-
-        return `
-          <tr>
-            <td>${escapeHtml(u.id)}</td>
-            <td class="user-name-cell">${escapeHtml(u.name)}</td>
-            <td>${escapeHtml(u.username)}</td>
-            <td>${escapeHtml(u.role)}</td>
-            <td>
-              <span class="status-pill ${pillClass}">&bull; ${escapeHtml(u.status)}</span>
-            </td>
-            <td class="actions-cell">
-              <div class="action-icons">
-                <button type="button" class="icon-btn" title="Edit User" onclick="openEditUser(${realIdx})">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                  </svg>
-                </button>
-                <button type="button" class="icon-btn" title="Toggle Active / Inactive" onclick="toggleUserStatus(${realIdx})">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                  </svg>
-                </button>
-                <button type="button" class="icon-btn delete-btn" title="Delete User" onclick="deleteUser(${realIdx})">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                  </svg>
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    createUserBtn.addEventListener('click', () => {
-      userModalTitle.textContent = 'Create User Account';
-      editUserIndex.value = '';
-      userForm.reset();
-      userStatusSelect.value = 'Active';
-      userRoleSelect.value = 'Staff';
-      userModal.classList.add('open');
-      userFullName.focus();
-    });
-
-    window.openEditUser = function(idx) {
-      const users = getUsers();
-      const target = users[idx];
-      if (!target) return;
-
-      userModalTitle.textContent = `Edit User (${target.id})`;
-      editUserIndex.value = String(idx);
-      userFullName.value = target.name;
-      userAccountName.value = target.username;
-      userRoleSelect.value = target.role;
-      userStatusSelect.value = target.status;
-      userModal.classList.add('open');
-    };
-
-    window.toggleUserStatus = function(idx) {
-      const users = getUsers();
-      if (!users[idx]) return;
-      users[idx].status = users[idx].status === 'Active' ? 'Inactive' : 'Active';
-      saveUsers(users);
-      renderUsers();
-      showToast(`Updated status for ${users[idx].name} to ${users[idx].status}.`);
-    };
-
-    window.deleteUser = function(idx) {
-      const users = getUsers();
-      const target = users[idx];
-      if (!target) return;
-
-      if (users.length === 1) {
-        alert('At least one user account must remain in the system.');
-        return;
-      }
-
-      if (confirm(`Delete user account "${target.name}" (${target.id})?`)) {
-        users.splice(idx, 1);
-        saveUsers(users);
-        renderUsers();
-        showToast(`Deleted user ${target.name}.`);
-      }
-    };
-
-    cancelUserModalBtn.addEventListener('click', () => {
-      userModal.classList.remove('open');
-    });
-
-    userForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const users = getUsers();
-      const idxStr = editUserIndex.value;
-
-      const payload = {
-        id: idxStr !== '' ? users[Number(idxStr)].id : generateNextUserId(users),
-        name: userFullName.value.trim(),
-        username: userAccountName.value.trim(),
-        role: userRoleSelect.value,
-        status: userStatusSelect.value
-      };
-
-      if (idxStr !== '') {
-        users[Number(idxStr)] = payload;
-        showToast(`Updated account ${payload.name}.`);
-      } else {
-        users.push(payload);
-        showToast(`Created user account ${payload.name} (${payload.id}).`);
-      }
-
-      saveUsers(users);
-      userModal.classList.remove('open');
-      renderUsers();
-    });
-
-    userSearchInput.addEventListener('input', renderUsers);
-
-    logoutBtn.addEventListener('click', () => {
-      if (confirm('Are you sure you want to logout?')) {
-        window.location.href = 'index.html';
-      }
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const savedUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_USER) || 'null');
-      if (savedUser) {
-        if (savedUser.displayName) {
-          document.getElementById('headerUserName').textContent = savedUser.displayName.toUpperCase();
-        }
-        if (savedUser.role) {
-          document.getElementById('headerUserRole').textContent = savedUser.role.toUpperCase();
-        }
-      }
-      renderUsers();
-    });
-  </script>
   <script src="jscript/app.js" defer></script>
 </body>
 </html>

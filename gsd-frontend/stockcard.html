@@ -557,8 +557,8 @@
   <header class="topbar">
     <div class="topbar-title">GENERAL SERVICE DIVISION</div>
     <div class="user-info">
-      <div class="user-name" id="headerUserName">CHRISTOPHER JOHN L. HERRERA</div>
-      <div class="user-role" id="headerUserRole">ADMINISTRATOR</div>
+      <div class="user-name" id="headerUserName">-</div>
+      <div class="user-role" id="headerUserRole">-</div>
     </div>
   </header>
 
@@ -707,38 +707,38 @@
 
           <div class="meta-row">
             <span class="meta-label">Item:</span>
-            <span class="meta-value bold" id="metaItemName">0.18m x 1.22m x 4mm thk VINYL TILES (WOOD LOOK)</span>
+            <span class="meta-value bold" id="metaItemName">-</span>
           </div>
           <div class="meta-row">
             <span class="meta-label">Stock No.:</span>
-            <span class="meta-value" id="metaStockNo"></span>
+            <span class="meta-value" id="metaStockNo">-</span>
           </div>
 
           <div class="meta-row">
             <span class="meta-label">Description:</span>
-            <span class="meta-value" id="metaDescription">FLOORING MATERIALS</span>
+            <span class="meta-value" id="metaDescription">-</span>
           </div>
           <div class="meta-row">
             <span class="meta-label">Re-order Point:</span>
-            <span class="meta-value" id="metaReorderPoint"></span>
+            <span class="meta-value" id="metaReorderPoint">-</span>
           </div>
 
           <div class="meta-row">
             <span class="meta-label">Unit of Measurement:</span>
-            <span class="meta-value" id="metaUnit">PER PIECE</span>
+            <span class="meta-value" id="metaUnit">-</span>
           </div>
           <div class="meta-row">
             <span class="meta-label">Current Balance:</span>
-            <span class="meta-value bold" id="metaCurrentBalance">31 PCS</span>
+            <span class="meta-value bold" id="metaCurrentBalance">-</span>
           </div>
         </div>
 
         <!-- AUDIT TRAIL SUMMARY BAR (Screen Only) -->
         <div class="audit-summary" id="auditSummary">
-          <span class="audit-pill">PO (Stock-In) Count: <strong id="poCount">1</strong></span>
-          <span class="audit-pill">SRF (Stock-Out) Count: <strong id="srfCount">5</strong></span>
-          <span class="audit-pill">Total Received: <strong id="totalReceived">1400</strong></span>
-          <span class="audit-pill">Total Issued: <strong id="totalIssued">1369</strong></span>
+          <span class="audit-pill">PO (Stock-In) Count: <strong id="poCount">0</strong></span>
+          <span class="audit-pill">SRF (Stock-Out) Count: <strong id="srfCount">0</strong></span>
+          <span class="audit-pill">Total Received: <strong id="totalReceived">0</strong></span>
+          <span class="audit-pill">Total Issued: <strong id="totalIssued">0</strong></span>
         </div>
 
         <!-- LEDGER TABLE (Screen) -->
@@ -789,21 +789,21 @@
         </tr>
         <tr>
           <td class="psc-meta-label">Item:</td>
-          <td class="psc-meta-val-left psc-meta-bold" id="pscItemName">0.18m x 1.22m x 4mm thk VINYL TILES (WOOD LOOK)</td>
+          <td class="psc-meta-val-left psc-meta-bold" id="pscItemName">-</td>
           <td class="psc-meta-label-right">Stock No.:</td>
-          <td class="psc-meta-val-right" id="pscStockNo"></td>
+          <td class="psc-meta-val-right" id="pscStockNo">-</td>
         </tr>
         <tr>
           <td class="psc-meta-label">Description:</td>
-          <td class="psc-meta-val-left" id="pscDescription">FLOORING MATERIALS</td>
+          <td class="psc-meta-val-left" id="pscDescription">-</td>
           <td class="psc-meta-label-right">Re-order Point:</td>
-          <td class="psc-meta-val-right" id="pscReorderPoint"></td>
+          <td class="psc-meta-val-right" id="pscReorderPoint">-</td>
         </tr>
         <tr>
           <td class="psc-meta-label">Unit of Measurement:</td>
-          <td class="psc-meta-val-left" id="pscUnit">PER PIECE</td>
+          <td class="psc-meta-val-left" id="pscUnit">-</td>
           <td class="psc-meta-label-right">Current Balance:</td>
-          <td class="psc-meta-val-right psc-meta-bold" id="pscCurrentBalance">31 PCS</td>
+          <td class="psc-meta-val-right psc-meta-bold" id="pscCurrentBalance">-</td>
         </tr>
       </table>
 
@@ -834,488 +834,7 @@
       <div>Email: contact-us@nia.gov.ph &bull; Website: www.nia.gov.ph &bull; TIN: 000916415</div>
     </div>
   </div>
-
-  <script type="application/json">
-    const STORAGE_KEYS = {
-      INVENTORY: 'gsd_inventory',
-      TRANSACTIONS: 'gsd_transactions',
-      SETTINGS: 'gsd_settings',
-      CURRENT_USER: 'gsd_current_user'
-    };
-
-    const DEFAULT_ITEMS_CATALOG = [
-      {
-        stockNo: '',
-        itemName: '0.18m x 1.22m x 4mm thk VINYL TILES (WOOD LOOK)',
-        aliases: ['VINYL TILES', 'VINLYN TILES', 'VINYL TILE', 'WOOD LOOK'],
-        description: 'FLOORING MATERIALS',
-        unit: 'PER PIECE',
-        unitShort: 'pcs',
-        reorderPoint: '',
-        entries: [
-          { date: '5/28/26', rawDate: '2026-05-28', type: 'PO', reference: 'P.O 2026-04-05', receiptQty: 1400, issueQty: null, office: null, balanceQty: 1400, daysToConsume: null },
-          { date: '5/29/26', rawDate: '2026-05-29', type: 'SRF', reference: 'SRF # 817', receiptQty: null, issueQty: 330, office: 'OCBS', balanceQty: 1070, daysToConsume: 1 },
-          { date: '6/2/26', rawDate: '2026-06-02', type: 'SRF', reference: 'SRF # 831', receiptQty: null, issueQty: 330, office: 'OCBS', balanceQty: 740, daysToConsume: 4 },
-          { date: '6/3/26', rawDate: '2026-06-03', type: 'SRF', reference: 'SRF # 838', receiptQty: null, issueQty: 220, office: 'OCBS', balanceQty: 520, daysToConsume: 1 },
-          { date: '6/4/26', rawDate: '2026-06-04', type: 'SRF', reference: 'SRF # 842', receiptQty: null, issueQty: 440, office: 'OCBS', balanceQty: 80, daysToConsume: 1 },
-          { date: '6/8/26', rawDate: '2026-06-08', type: 'SRF', reference: 'SRF # 854', receiptQty: null, issueQty: 80, office: 'OCBS', balanceQty: 31, daysToConsume: 4 }
-        ]
-      }
-    ];
-
-    const searchInput = document.getElementById('stockCardSearch');
-    const itemDatalist = document.getElementById('stockCardItemList');
-    const stockCardBody = document.getElementById('stockCardBody');
-    const pscLedgerBody = document.getElementById('pscLedgerBody');
-
-    const metaEntityName = document.getElementById('metaEntityName');
-    const metaFundCluster = document.getElementById('metaFundCluster');
-    const metaItemName = document.getElementById('metaItemName');
-    const metaUnit = document.getElementById('metaUnit');
-    const metaDescription = document.getElementById('metaDescription');
-    const metaReorderPoint = document.getElementById('metaReorderPoint');
-    const metaStockNo = document.getElementById('metaStockNo');
-    const metaCurrentBalance = document.getElementById('metaCurrentBalance');
-
-    const poCountEl = document.getElementById('poCount');
-    const srfCountEl = document.getElementById('srfCount');
-    const totalReceivedEl = document.getElementById('totalReceived');
-    const totalIssuedEl = document.getElementById('totalIssued');
-
-    const printBtn = document.getElementById('printBtn');
-    const exportCsvBtn = document.getElementById('exportCsvBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-
-    let activeStockCardData = null;
-
-    function parseFlexibleDate(dateStr) {
-      if (!dateStr) return null;
-      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-        const [y, m, d] = dateStr.split('-').map(Number);
-        return new Date(y, m - 1, d);
-      }
-      const parts = dateStr.split(/[\/\-]/).map(Number);
-      if (parts.length === 3) {
-        let [a, b, c] = parts;
-        if (c < 100) c += 2000;
-        if (a > 12) return new Date(c, b - 1, a);
-        return new Date(c, a - 1, b);
-      }
-      const parsed = new Date(dateStr);
-      return isNaN(parsed.getTime()) ? null : parsed;
-    }
-
-    function formatShortDate(dateObj) {
-      if (!dateObj || isNaN(dateObj.getTime())) return '';
-      const m = dateObj.getMonth() + 1;
-      const d = dateObj.getDate();
-      const yy = String(dateObj.getFullYear()).slice(-2);
-      return `${m}/${d}/${yy}`;
-    }
-
-    function computeDaysBetween(prevDateStr, currDateStr) {
-      const d1 = parseFlexibleDate(prevDateStr);
-      const d2 = parseFlexibleDate(currDateStr);
-      if (!d1 || !d2) return 1;
-      const diffDays = Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
-      return diffDays >= 0 ? diffDays : 0;
-    }
-
-    function formatNumberWithCommas(num) {
-      return Number(num).toLocaleString('en-US');
-    }
-
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = String(str ?? '');
-      return div.innerHTML;
-    }
-
-    function buildAllStockCards() {
-      const inventory = JSON.parse(localStorage.getItem(STORAGE_KEYS.INVENTORY) || '[]');
-      const transactions = JSON.parse(localStorage.getItem(STORAGE_KEYS.TRANSACTIONS) || '[]');
-
-      const cardsMap = new Map();
-
-      DEFAULT_ITEMS_CATALOG.forEach(sample => {
-        const key = sample.itemName.toUpperCase();
-        cardsMap.set(key, {
-          stockNo: sample.stockNo,
-          itemName: sample.itemName,
-          aliases: sample.aliases,
-          description: sample.description,
-          unit: sample.unit,
-          unitShort: sample.unitShort,
-          reorderPoint: sample.reorderPoint,
-          entries: [...sample.entries],
-          isDefaultSample: true
-        });
-      });
-
-      inventory.forEach(invItem => {
-        const nameUpper = (invItem.productName || '').trim().toUpperCase();
-        if (!nameUpper) return;
-
-        const existingKey = Array.from(cardsMap.keys()).find(k =>
-          k === nameUpper || (cardsMap.get(k).aliases || []).some(a => nameUpper.includes(a))
-        );
-
-        if (!existingKey) {
-          cardsMap.set(nameUpper, {
-            stockNo: invItem.stockNo || '',
-            itemName: nameUpper,
-            aliases: [],
-            description: (invItem.category || '').toUpperCase(),
-            unit: invItem.unit ? `PER ${String(invItem.unit).toUpperCase()}` : 'PER PIECE',
-            unitShort: (invItem.unit || 'pcs').toLowerCase(),
-            reorderPoint: invItem.reorderPoint ? `${invItem.reorderPoint} ${String(invItem.unit || 'PCS').toUpperCase()}` : '',
-            entries: []
-          });
-        }
-      });
-
-      const txnsByItem = new Map();
-
-      [...transactions].reverse().forEach(txn => {
-        const prodUpper = (txn.productName || '').trim().toUpperCase();
-        if (!prodUpper) return;
-
-        let targetKey = prodUpper;
-        for (const [k, card] of cardsMap.entries()) {
-          if (k === prodUpper || (card.aliases || []).some(a => prodUpper.includes(a) || k.includes(prodUpper))) {
-            targetKey = k;
-            break;
-          }
-        }
-
-        if (!cardsMap.has(targetKey)) {
-          cardsMap.set(targetKey, {
-            stockNo: '',
-            itemName: prodUpper,
-            aliases: [],
-            description: (txn.category || '').toUpperCase(),
-            unit: txn.unit ? `PER ${String(txn.unit).toUpperCase()}` : 'PER PIECE',
-            unitShort: (txn.unit || 'pcs').toLowerCase(),
-            reorderPoint: ''
-          });
-        }
-
-        if (!txnsByItem.has(targetKey)) {
-          txnsByItem.set(targetKey, []);
-        }
-        txnsByItem.get(targetKey).push(txn);
-      });
-
-      cardsMap.forEach((card, key) => {
-        const liveTxns = txnsByItem.get(key) || [];
-        if (liveTxns.length === 0) return;
-
-        let runningBalance = 0;
-        let lastIssueDateStr = null;
-
-        const computedEntries = liveTxns.map(txn => {
-          const parsedDate = parseFlexibleDate(txn.date);
-          const displayDate = parsedDate ? formatShortDate(parsedDate) : (txn.date || '');
-          const isReceipt = txn.type === 'IN' || txn.type === 'PO' || txn.type === 'RETURN';
-
-          let receiptQty = null;
-          let issueQty = null;
-          let office = null;
-          let daysToConsume = null;
-
-          if (isReceipt) {
-            receiptQty = Number(txn.quantity) || 0;
-            runningBalance += receiptQty;
-          } else {
-            issueQty = Number(txn.quantity) || 0;
-            runningBalance = Math.max(0, runningBalance - issueQty);
-            office = txn.office || '';
-            daysToConsume = lastIssueDateStr ? computeDaysBetween(lastIssueDateStr, txn.date) : 1;
-            lastIssueDateStr = txn.date;
-          }
-
-          return {
-            date: displayDate,
-            rawDate: txn.date,
-            type: isReceipt ? 'PO' : 'SRF',
-            reference: txn.reference || (isReceipt ? 'PO' : 'SRF'),
-            receiptQty,
-            issueQty,
-            office,
-            balanceQty: typeof txn.balance === 'number' ? txn.balance : runningBalance,
-            daysToConsume
-          };
-        });
-
-        if (card.entries && card.entries.length > 0 && card.isDefaultSample) {
-          let bal = card.entries[card.entries.length - 1].balanceQty;
-          const appended = computedEntries.map(e => {
-            if (e.receiptQty) bal += e.receiptQty;
-            if (e.issueQty) bal = Math.max(0, bal - e.issueQty);
-            return { ...e, balanceQty: bal };
-          });
-          card.entries = [...card.entries, ...appended];
-        } else {
-          card.entries = computedEntries;
-        }
-      });
-
-      return Array.from(cardsMap.values());
-    }
-
-    function populateSearchSuggestions(cards) {
-      itemDatalist.innerHTML = '';
-      cards.forEach(card => {
-        const opt = document.createElement('option');
-        opt.value = card.itemName;
-        itemDatalist.appendChild(opt);
-      });
-    }
-
-    function syncPrintStockCard(selectedCard, entries, unitLabel, latestBalance) {
-      document.getElementById('pscEntityName').textContent = metaEntityName.textContent;
-      document.getElementById('pscFundCluster').textContent = metaFundCluster.textContent;
-      document.getElementById('pscItemName').textContent = selectedCard.itemName;
-      document.getElementById('pscStockNo').textContent = selectedCard.stockNo;
-      document.getElementById('pscDescription').textContent = selectedCard.description;
-      document.getElementById('pscReorderPoint').textContent = selectedCard.reorderPoint;
-      document.getElementById('pscUnit').textContent = selectedCard.unit;
-      document.getElementById('pscCurrentBalance').textContent = `${formatNumberWithCommas(latestBalance)} ${unitLabel.toUpperCase()}`;
-
-      if (!entries || entries.length === 0) {
-        pscLedgerBody.innerHTML = `
-          <tr>
-            <td colspan="7" style="padding: 20px; color: #4b5563;">No transactions recorded.</td>
-          </tr>
-        `;
-        return;
-      }
-
-      pscLedgerBody.innerHTML = entries.map(ent => {
-        const isReceipt = ent.receiptQty !== null && ent.receiptQty !== undefined && Number(ent.receiptQty) > 0;
-        const receiptCell = isReceipt ? `${formatNumberWithCommas(ent.receiptQty)} ${unitLabel}` : '';
-        const issueQtyCell = (!isReceipt && ent.issueQty !== null && ent.issueQty !== undefined) ? `${formatNumberWithCommas(ent.issueQty)} ${unitLabel}` : '';
-        const officeCell = (!isReceipt && ent.office) ? escapeHtml(ent.office) : '';
-        const balanceCell = `${formatNumberWithCommas(ent.balanceQty)} ${unitLabel}`;
-        const daysCell = (!isReceipt && ent.daysToConsume !== null && ent.daysToConsume !== undefined) ? `${ent.daysToConsume}` : '';
-
-        return `
-          <tr>
-            <td>${escapeHtml(ent.date)}</td>
-            <td class="psc-ref-bold">${escapeHtml(ent.reference)}</td>
-            <td>${receiptCell}</td>
-            <td>${issueQtyCell}</td>
-            <td>${officeCell}</td>
-            <td>${balanceCell}</td>
-            <td>${daysCell}</td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    function renderStockCard(query = '') {
-      const allCards = buildAllStockCards();
-      populateSearchSuggestions(allCards);
-
-      const trimmedQuery = query.trim().toLowerCase();
-      let selectedCard = allCards[0];
-
-      if (trimmedQuery) {
-        const matched = allCards.find(card => {
-          const nameMatch = card.itemName.toLowerCase().includes(trimmedQuery);
-          const stockNoMatch = (card.stockNo || '').toLowerCase().includes(trimmedQuery);
-          const descMatch = (card.description || '').toLowerCase().includes(trimmedQuery);
-          const aliasMatch = (card.aliases || []).some(a => a.toLowerCase().includes(trimmedQuery));
-          const refMatch = (card.entries || []).some(ent => (ent.reference || '').toLowerCase().includes(trimmedQuery));
-          return nameMatch || stockNoMatch || descMatch || aliasMatch || refMatch;
-        });
-
-        if (matched) {
-          selectedCard = matched;
-        } else {
-          activeStockCardData = null;
-          metaItemName.textContent = query.toUpperCase();
-          metaDescription.textContent = '';
-          metaStockNo.textContent = '';
-          metaReorderPoint.textContent = '';
-          metaCurrentBalance.textContent = '';
-          poCountEl.textContent = '0';
-          srfCountEl.textContent = '0';
-          totalReceivedEl.textContent = '0';
-          totalIssuedEl.textContent = '0';
-          stockCardBody.innerHTML = `
-            <tr>
-              <td colspan="7" class="empty-ledger">
-                No stock card records found matching "<strong>${escapeHtml(query)}</strong>".
-              </td>
-            </tr>
-          `;
-          pscLedgerBody.innerHTML = `
-            <tr>
-              <td colspan="7" style="padding: 20px; color: #4b5563;">No stock card records found.</td>
-            </tr>
-          `;
-          return;
-        }
-      }
-
-      activeStockCardData = selectedCard;
-      const entries = selectedCard.entries || [];
-      const unitLabel = selectedCard.unitShort || 'pcs';
-
-      let poCount = 0;
-      let srfCount = 0;
-      let totalReceived = 0;
-      let totalIssued = 0;
-
-      entries.forEach(ent => {
-        if (ent.receiptQty && ent.receiptQty > 0) {
-          poCount += 1;
-          totalReceived += Number(ent.receiptQty);
-        }
-        if (ent.issueQty && ent.issueQty > 0) {
-          srfCount += 1;
-          totalIssued += Number(ent.issueQty);
-        }
-      });
-
-      const latestBalance = entries.length > 0 ? entries[entries.length - 1].balanceQty : 0;
-
-      metaItemName.textContent = selectedCard.itemName;
-      metaDescription.textContent = selectedCard.description;
-      metaStockNo.textContent = selectedCard.stockNo;
-      metaUnit.textContent = selectedCard.unit;
-      metaReorderPoint.textContent = selectedCard.reorderPoint;
-      metaCurrentBalance.textContent = `${formatNumberWithCommas(latestBalance)} ${unitLabel.toUpperCase()}`;
-
-      poCountEl.textContent = poCount;
-      srfCountEl.textContent = srfCount;
-      totalReceivedEl.textContent = formatNumberWithCommas(totalReceived);
-      totalIssuedEl.textContent = formatNumberWithCommas(totalIssued);
-
-      if (entries.length === 0) {
-        stockCardBody.innerHTML = `
-          <tr>
-            <td colspan="7" class="empty-ledger">
-              No Purchase Order (PO) or Stock-Out (SRF) transactions recorded yet for this item.
-            </td>
-          </tr>
-        `;
-      } else {
-        stockCardBody.innerHTML = entries.map(ent => {
-          const isReceipt = ent.receiptQty !== null && ent.receiptQty !== undefined && Number(ent.receiptQty) > 0;
-          const receiptCell = isReceipt ? `${formatNumberWithCommas(ent.receiptQty)} ${unitLabel}` : '';
-          const issueQtyCell = (!isReceipt && ent.issueQty !== null && ent.issueQty !== undefined) ? `${formatNumberWithCommas(ent.issueQty)} ${unitLabel}` : '';
-          const officeCell = (!isReceipt && ent.office) ? escapeHtml(ent.office) : '';
-          const balanceCell = `${formatNumberWithCommas(ent.balanceQty)} ${unitLabel}`;
-          const daysCell = (!isReceipt && ent.daysToConsume !== null && ent.daysToConsume !== undefined) ? `${ent.daysToConsume}` : '';
-          const refClass = isReceipt ? 'ref-po' : 'ref-srf';
-
-          return `
-            <tr>
-              <td>${escapeHtml(ent.date)}</td>
-              <td class="${refClass}">${escapeHtml(ent.reference)}</td>
-              <td>${receiptCell}</td>
-              <td>${issueQtyCell}</td>
-              <td>${officeCell}</td>
-              <td>${balanceCell}</td>
-              <td>${daysCell}</td>
-            </tr>
-          `;
-        }).join('');
-      }
-
-      syncPrintStockCard(selectedCard, entries, unitLabel, latestBalance);
-    }
-
-    function exportStockCardCsv() {
-      if (!activeStockCardData) return;
-
-      const card = activeStockCardData;
-      const unitLabel = card.unitShort || 'pcs';
-      const rows = [
-        ['Entity Name', metaEntityName.textContent],
-        ['Item', card.itemName],
-        ['Description', card.description],
-        ['Stock No.', card.stockNo],
-        ['Unit of Measurement', card.unit],
-        ['Re-order Point', card.reorderPoint],
-        [],
-        ['Date', 'Reference', 'Receipt Qty.', 'Issue Qty.', 'Issue Office', 'Balance Qty.', 'No. of Days to Consume']
-      ];
-
-      (card.entries || []).forEach(ent => {
-        const isReceipt = ent.receiptQty && Number(ent.receiptQty) > 0;
-        rows.push([
-          ent.date,
-          ent.reference,
-          isReceipt ? `${ent.receiptQty} ${unitLabel}` : '',
-          !isReceipt && ent.issueQty ? `${ent.issueQty} ${unitLabel}` : '',
-          !isReceipt && ent.office ? ent.office : '',
-          `${ent.balanceQty} ${unitLabel}`,
-          !isReceipt && ent.daysToConsume !== null ? ent.daysToConsume : ''
-        ]);
-      });
-
-      const csvContent = rows
-        .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
-        .join('\n');
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `StockCard_${(card.itemName || 'Item').replace(/[^a-zA-Z0-9-_]/g, '_')}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }
-
-    searchInput.addEventListener('input', (e) => {
-      renderStockCard(e.target.value);
-    });
-
-    printBtn.addEventListener('click', () => {
-      renderStockCard(searchInput.value);
-      window.print();
-    });
-
-    exportCsvBtn.addEventListener('click', exportStockCardCsv);
-
-    logoutBtn.addEventListener('click', () => {
-      if (confirm('Are you sure you want to logout?')) {
-        window.location.href = 'index.html';
-      }
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const savedUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_USER) || 'null');
-      if (savedUser) {
-        if (savedUser.displayName) {
-          document.getElementById('headerUserName').textContent = savedUser.displayName.toUpperCase();
-        }
-        if (savedUser.role) {
-          document.getElementById('headerUserRole').textContent = savedUser.role.toUpperCase();
-        }
-      }
-
-      const savedSettings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS) || 'null');
-      if (savedSettings) {
-        if (savedSettings.entityName) metaEntityName.textContent = savedSettings.entityName;
-        if (savedSettings.fundCluster) metaFundCluster.textContent = savedSettings.fundCluster;
-      }
-
-      const params = new URLSearchParams(window.location.search);
-      const itemParam = params.get('item');
-      if (itemParam) {
-        searchInput.value = itemParam;
-        renderStockCard(itemParam);
-      } else {
-        renderStockCard('');
-      }
-    });
-  </script>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="jscript/app.js" defer></script>
 </body>
 </html>
