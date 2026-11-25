@@ -842,27 +842,45 @@
         </form>
       </section>
 
-      <!-- RIGHT CARD: RECENT RETURN SLIP -->
-      <section class="card">
+      <!-- RIGHT CARD: RETURN SLIP ARCHIVE -->
+      <section class="card archive-card">
         <div class="card-header">
           <div class="card-title-group">
             <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="9"></circle>
-              <polyline points="12 7 12 12 15 14"></polyline>
+              <polyline points="21 8 21 21 3 21 3 8"></polyline>
+              <rect x="1" y="3" width="22" height="5"></rect>
+              <line x1="10" y1="12" x2="14" y2="12"></line>
             </svg>
-            <h2 class="card-title">Recent Return Slip</h2>
+            <h2 class="card-title">Return Slip Archive</h2>
           </div>
-          <button type="button" class="btn-print-slip" id="printSlipBtn">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <polyline points="6 9 6 2 18 2 18 9"></polyline>
-              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-              <rect x="6" y="14" width="12" height="8"></rect>
-            </svg>
-            Print Slip
-          </button>
+          <span class="archive-count-badge" id="archiveCountBadge">0 records</span>
         </div>
 
-        <div id="recentSlipContainer" class="recent-slip-details">
+        <div class="archive-toolbar">
+          <div class="search-wrap archive-search-wrap">
+            <svg class="search-icon" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              id="archiveSearchInput"
+              class="archive-filter-input"
+              placeholder="Search slip no., item, office..."
+              autocomplete="off"
+            />
+          </div>
+          <input
+            type="date"
+            id="archiveDateFilter"
+            class="archive-date-input"
+            title="Filter by date returned"
+            aria-label="Filter archive by date returned"
+          />
+          <button type="button" class="pill-btn-sm" id="clearArchiveFilterBtn" title="Show all dates">All</button>
+        </div>
+
+        <div id="recentSlipContainer" class="recent-slip-details archive-scroll-list">
           <!-- Populated dynamically -->
         </div>
       </section>

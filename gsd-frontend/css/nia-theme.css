@@ -718,6 +718,149 @@ tbody td {
   color: var(--nia-muted);
 }
 
+/* Return Slip Archive Library */
+.archive-count-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--nia-leaf-light);
+  border: 1px solid #c5dcb0;
+  color: var(--nia-forest-deep);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.archive-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.archive-search-wrap {
+  position: relative;
+  flex: 1 1 180px;
+  display: flex;
+  align-items: center;
+}
+
+.archive-search-wrap .search-icon {
+  position: absolute;
+  left: 10px;
+  width: 14px;
+  height: 14px;
+  stroke: #7c8780;
+  fill: none;
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.archive-filter-input {
+  width: 100%;
+  height: 35px;
+  padding: 0 10px 0 30px;
+  border: 1px solid #cbd9ce;
+  border-radius: 6px;
+  font-size: 12.5px;
+  background: #fff;
+}
+
+.archive-date-input {
+  height: 35px;
+  padding: 0 10px;
+  border: 1px solid #cbd9ce;
+  border-radius: 6px;
+  font-size: 12px;
+  background: #fff;
+}
+
+.archive-scroll-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.archive-date-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.archive-date-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: #edf4eb;
+  border-left: 3px solid var(--nia-forest);
+  color: var(--nia-forest-deep);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.archive-date-count {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #466353;
+}
+
+.archive-entry-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e1eae1;
+  border-radius: 7px;
+  background: #fbfdf9;
+  transition: border-color .16s ease, background-color .16s ease;
+}
+
+.archive-entry-card:hover {
+  border-color: #b6d08b;
+  background: #f5faee;
+}
+
+.archive-entry-body {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  line-height: 1.4;
+}
+
+.archive-print-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid #bfd0c2;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--nia-forest);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.archive-print-btn:hover {
+  border-color: var(--nia-forest);
+  background: var(--nia-forest);
+  color: #fff;
+}
+
 .toast,
 .toast-banner {
   position: fixed;

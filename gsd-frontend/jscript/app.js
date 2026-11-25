@@ -697,7 +697,11 @@ async function gsdReturnPage() {
   const product = document.getElementById('productNameInput');
   const officeInput = document.getElementById('returningOfficeInput');
   const unitInput = document.getElementById('unitInput');
-  let hasActiveSlip = false;
+  const archiveContainer = document.getElementById('recentSlipContainer');
+  const archiveSearch = document.getElementById('archiveSearchInput');
+  const archiveDate = document.getElementById('archiveDateFilter');
+  const archiveBadge = document.getElementById('archiveCountBadge');
+  let archiveRows = [];
 
   const syncSrfSuggestions = async () => {
     const srfRows = (await gsdRequest('/transactions?type=SRF&limit=500')).transactions;
@@ -728,6 +732,96 @@ async function gsdReturnPage() {
   product.addEventListener('input', fillUnitFromProduct);
   product.addEventListener('change', fillUnitFromProduct);
 
+  const parseMeta = row => {
+    if (row.metadata && typeof row.metadata === 'object') return row.metadata;
+    try { return JSON.parse(row.metadata || '{}'); } catch { return {}; }
+  };
+
+  const renderArchive = () => {
+    if (!archiveContainer) return;
+    const query = archiveSearch?.value.trim().toLowerCase() || '';
+    const dateFilter = archiveDate?.value || '';
+    const filtered = archiveRows.filter(row => {
+      const details = parseMeta(row);
+      const text = `${row.reference} ${row.item_name} ${row.office || ''} ${details.location || ''} ${details.originalSrf || ''} ${row.actor_name || ''}`.toLowerCase();
+      return (!query || text.includes(query)) && (!dateFilter || String(row.occurred_on || '').slice(0, 10) === dateFilter);
+    });
+    if (archiveBadge) {
+      archiveBadge.textContent = `${filtered.length} ${filtered.length === 1 ? 'record' : 'records'}`;
+    }
+    if (!filtered.length) {
+      archiveContainer.innerHTML = '<p class="empty-state">No return slip records match the current filter.</p>';
+      return;
+    }
+    const groups = new Map();
+    filtered.forEach(row => {
+      const key = String(row.occurred_on || '').slice(0, 10) || 'Undated';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(row);
+    });
+    archiveContainer.innerHTML = [...groups.entries()].map(([dateKey, entries]) => `
+      <section class="archive-date-group">
+        <div class="archive-date-header">
+          <span>${gsdEscape(dateKey === 'Undated' ? 'Undated' : gsdDisplayDate(dateKey))}</span>
+          <span class="archive-date-count">${entries.length} ${entries.length === 1 ? 'slip' : 'slips'}</span>
+        </div>
+        ${entries.map(row => {
+          const details = parseMeta(row);
+          const officeLabel = row.office || details.returningOffice || '';
+          return `
+            <article class="archive-entry-card">
+              <div class="archive-entry-body">
+                <div class="recent-entry-ref">${gsdEscape(row.reference)}</div>
+                <div class="recent-entry-product">${gsdEscape(row.item_name)}</div>
+                <div class="recent-entry-meta">${gsdFormatNumber(row.quantity)} ${gsdEscape(row.unit)} &middot; ${gsdDisplayDate(row.occurred_on)}</div>
+                ${officeLabel ? `<div class="recent-entry-office">Office: ${gsdEscape(officeLabel)}</div>` : ''}
+                <small class="recent-entry-actor">Recorded by ${gsdEscape(row.actor_name || 'System')}</small>
+              </div>
+              <button type="button" class="archive-print-btn" data-action="print-slip" data-id="${row.id}" title="Print Return Slip ${gsdEscape(row.reference)}" aria-label="Print Return Slip ${gsdEscape(row.reference)}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                  <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
+                Print
+              </button>
+            </article>`;
+        }).join('')}
+      </section>`).join('');
+  };
+
+  const loadArchive = async () => {
+    archiveRows = (await gsdRequest('/transactions?type=RETURN&limit=500')).transactions;
+    renderArchive();
+  };
+
+  archiveSearch?.addEventListener('input', renderArchive);
+  archiveDate?.addEventListener('change', renderArchive);
+  document.getElementById('clearArchiveFilterBtn')?.addEventListener('click', () => {
+    if (archiveSearch) archiveSearch.value = '';
+    if (archiveDate) archiveDate.value = '';
+    renderArchive();
+  });
+
+  archiveContainer?.addEventListener('click', event => {
+    const button = event.target.closest('button[data-action="print-slip"]');
+    if (!button) return;
+    const record = archiveRows.find(row => row.id === Number(button.dataset.id));
+    if (!record) return;
+    const details = parseMeta(record);
+    gsdUpdatePrintSlip({
+      ...details,
+      reference: record.reference,
+      itemNo: record.item_id ? `PROD${String(record.item_id).padStart(4, '0')}` : '1',
+      itemName: record.item_name,
+      quantity: record.quantity,
+      unit: record.unit,
+      date: record.occurred_on,
+      reason: details.reason || record.notes || '-'
+    });
+    window.print();
+  });
+
   gsdWireClear(form, document.getElementById('clearFormBtn'), () => srfInput.focus());
   form.addEventListener('submit', async event => {
     event.preventDefault();
@@ -749,7 +843,6 @@ async function gsdReturnPage() {
         type: 'RETURN', reference, itemName: product.value, quantity: document.getElementById('quantityReturnInput').value,
         unit: unitInput.value, office: details.returningOffice, notes: details.reason, details, date
       }) });
-      hasActiveSlip = true;
       gsdUpdatePrintSlip({
         ...details,
         reference,
@@ -759,40 +852,31 @@ async function gsdReturnPage() {
         unit: unitInput.value,
         date
       });
-      gsdToast('Return slip recorded and stock restored.');
+      gsdToast('Return slip recorded and added to archive.');
       form.reset();
       inventory = await gsdGetInventory();
       document.getElementById('returnProductList').innerHTML = gsdProductOptions(inventory);
       srfRows = await syncSrfSuggestions();
-      await gsdRenderRecent('RETURN', 'recentSlipContainer');
+      await loadArchive();
     } catch (error) {
       gsdToast(error.message, true);
     } finally {
       button.disabled = false;
     }
   });
-  document.getElementById('printSlipBtn')?.addEventListener('click', () => {
-    if (!hasActiveSlip) {
-      gsdToast('Record a return slip first before printing.', true);
-      return;
-    }
-    window.print();
-  });
-  await gsdRenderRecent('RETURN', 'recentSlipContainer');
-  const latestReturn = (await gsdRequest('/transactions?type=RETURN&limit=1')).transactions[0];
-  if (latestReturn) {
-    let details = {};
-    if (latestReturn.metadata && typeof latestReturn.metadata === 'object') details = latestReturn.metadata;
-    else try { details = JSON.parse(latestReturn.metadata || '{}'); } catch { details = {}; }
-    hasActiveSlip = true;
+
+  await loadArchive();
+  if (archiveRows[0]) {
+    const latest = archiveRows[0];
+    const details = parseMeta(latest);
     gsdUpdatePrintSlip({
       ...details,
-      reference: latestReturn.reference,
-      itemNo: latestReturn.item_id ? `PROD${String(latestReturn.item_id).padStart(4, '0')}` : '1',
-      itemName: latestReturn.item_name,
-      quantity: latestReturn.quantity,
-      unit: latestReturn.unit,
-      date: latestReturn.occurred_on
+      reference: latest.reference,
+      itemNo: latest.item_id ? `PROD${String(latest.item_id).padStart(4, '0')}` : '1',
+      itemName: latest.item_name,
+      quantity: latest.quantity,
+      unit: latest.unit,
+      date: latest.occurred_on
     });
   } else {
     gsdUpdatePrintSlip({ reference: '-', itemNo: '1', itemName: '-', quantity: 0, unit: '', date: '' });
