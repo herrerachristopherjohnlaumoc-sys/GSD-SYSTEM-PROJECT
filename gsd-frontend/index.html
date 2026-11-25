@@ -6,7 +6,8 @@
   <title>General Service Division - Inventory Management System</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/nia-theme.css" />
   <style>
     * {
       box-sizing: border-box;
@@ -14,19 +15,18 @@
       padding: 0;
     }
 
-    body {
+    body.login-dark-body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #f4f7f5;
+      background: radial-gradient(circle at top, #1f2937 0%, #0f172a 58%, #090d16 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
       overflow: hidden;
-      color: #1e293b;
+      color: #f8fafc;
     }
 
-    /* Background Decorative Circles */
     .bg-decorations {
       position: fixed;
       inset: 0;
@@ -34,76 +34,64 @@
       z-index: 0;
     }
 
-    .floating-circle {
+    .bg-decorations .floating-circle {
       position: absolute;
       border-radius: 50%;
-      background-color: #e7efe7;
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.14);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #8ca897;
+      color: rgba(251, 191, 36, 0.45);
     }
 
-    /* Top Left: Forklift */
-    .circle-forklift {
-      width: 140px;
-      height: 140px;
-      top: 12%;
-      left: 26%;
-    }
+    .circle-forklift { width: 140px; height: 140px; top: 12%; left: 22%; }
+    .circle-tag { width: 120px; height: 120px; top: 15%; right: 22%; }
+    .circle-box { width: 112px; height: 112px; bottom: 15%; left: 24%; }
+    .circle-drill { width: 130px; height: 130px; bottom: 12%; right: 23%; }
 
-    /* Top Right: Price Tag */
-    .circle-tag {
-      width: 120px;
-      height: 120px;
-      top: 15%;
-      right: 26%;
-    }
-
-    /* Bottom Left: Cube/Box */
-    .circle-box {
-      width: 112px;
-      height: 112px;
-      bottom: 15%;
-      left: 28%;
-    }
-
-    /* Bottom Right: Drill/Tool */
-    .circle-drill {
-      width: 130px;
-      height: 130px;
-      bottom: 12%;
-      right: 27%;
-    }
-
-    /* Login Card */
-    .login-card {
+    .login-card.login-dark-card {
       position: relative;
       z-index: 1;
-      background-color: #ffffff;
+      background: #111827;
       width: 100%;
-      max-width: 530px;
-      padding: 58px 46px 50px;
-      border-radius: 10px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03);
+      max-width: 440px;
+      padding: 40px 36px 34px;
+      border-radius: 14px;
+      border: 1px solid #263244;
+      border-top: 4px solid #f59e0b;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
       text-align: center;
       margin: 20px;
     }
 
-    .title {
-      font-size: 21px;
-      font-weight: 700;
-      color: #1f2937;
-      letter-spacing: 0.4px;
-      margin-bottom: 12px;
+    .login-wrench-badge {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 16px;
+      border-radius: 14px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      color: #fbbf24;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-dark-card .title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #f8fafc;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
       text-transform: uppercase;
     }
 
-    .subtitle {
+    .login-dark-card .subtitle {
       font-size: 13px;
       font-weight: 400;
-      color: #6b7280;
-      margin-bottom: 34px;
+      color: #94a3b8;
+      margin-bottom: 28px;
     }
 
     .login-form {
@@ -111,16 +99,16 @@
     }
 
     .form-group {
-      margin-bottom: 22px;
+      margin-bottom: 18px;
     }
 
-    .form-label {
+    .login-dark-card .form-label {
       display: block;
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 700;
-      color: #374151;
-      letter-spacing: 0.4px;
-      margin-bottom: 8px;
+      color: #cbd5e1;
+      letter-spacing: 0.6px;
+      margin-bottom: 7px;
       text-transform: uppercase;
     }
 
@@ -132,144 +120,285 @@
 
     .input-icon {
       position: absolute;
-      left: 14px;
-      color: #6b7280;
+      left: 13px;
+      color: #94a3b8;
       display: flex;
       align-items: center;
       justify-content: center;
       pointer-events: none;
     }
 
-    .form-input {
+    .login-dark-card .form-input {
       width: 100%;
       height: 44px;
       padding: 0 42px 0 40px;
-      background-color: #f3f4f6;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
       font-family: inherit;
       font-size: 13.5px;
-      color: #1f2937;
+      color: #f8fafc;
       outline: none;
       transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
     }
 
-    .form-input::placeholder {
-      color: #7d8590;
+    .login-dark-card .form-input::placeholder {
+      color: #64748b;
     }
 
-    .form-input:focus {
-      background-color: #ffffff;
-      border-color: #266b47;
-      box-shadow: 0 0 0 3px rgba(38, 107, 71, 0.12);
+    .login-dark-card .form-input:focus {
+      background-color: #0f172a;
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
     }
 
-    textarea.form-input {
+    .login-dark-card textarea.form-input {
       height: auto;
-      min-height: 110px;
+      min-height: 104px;
       padding: 12px 14px;
       resize: vertical;
     }
 
     .toggle-password {
       position: absolute;
-      right: 14px;
-      background: none;
+      right: 10px;
+      min-height: 30px;
+      height: 30px;
+      width: 30px;
+      background: transparent;
       border: none;
-      color: #6b7280;
+      color: #94a3b8;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 4px;
-      transition: color 0.2s;
+      border-radius: 6px;
+      box-shadow: none;
+      transition: color 0.15s, background-color 0.15s;
     }
 
     .toggle-password:hover {
-      color: #374151;
+      color: #f8fafc;
+      background-color: rgba(148, 163, 184, 0.15);
+      transform: none;
+      box-shadow: none;
     }
 
-    .btn-submit {
+    .login-dark-card .btn-submit {
       width: 100%;
       height: 44px;
-      margin-top: 10px;
-      background-color: #266b47;
-      color: #ffffff;
+      margin-top: 8px;
+      background: #f59e0b;
+      color: #111827;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       font-family: inherit;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.6px;
+      font-size: 13.5px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
       text-transform: uppercase;
       cursor: pointer;
-      transition: background-color 0.2s, transform 0.1s;
+      transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
     }
 
-    .btn-submit:hover {
-      background-color: #1f583a;
-    }
-
-    .btn-submit:active {
-      transform: scale(0.995);
+    .login-dark-card .btn-submit:hover {
+      background: #fbbf24;
+      box-shadow: 0 8px 20px rgba(245, 158, 11, 0.28);
     }
 
     .card-footer {
-      margin-top: 26px;
+      margin-top: 22px;
       text-align: center;
     }
 
-    .forgot-link {
+    .login-dark-card .forgot-link {
       display: inline-block;
       font-size: 12.5px;
-      color: #266b47;
+      color: #fbbf24;
       text-decoration: none;
-      font-weight: 500;
-      margin-bottom: 22px;
-      transition: color 0.2s;
+      font-weight: 600;
+      margin-bottom: 18px;
     }
 
-    .forgot-link:hover {
+    .login-dark-card .forgot-link:hover {
       text-decoration: underline;
-      color: #1f583a;
+      color: #fde68a;
     }
 
     .authorized-note {
       font-size: 10.5px;
       font-weight: 700;
-      color: #4b5563;
-      letter-spacing: 0.8px;
+      color: #64748b;
+      letter-spacing: 0.9px;
       text-transform: uppercase;
     }
 
-    /* Responsive adjustments for smaller screens */
+    /* Mandatory Security Update Modal */
+    .security-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 13, 22, 0.82);
+      backdrop-filter: blur(5px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 1500;
+    }
+
+    .security-modal-backdrop.open {
+      display: flex;
+    }
+
+    .security-modal-card {
+      width: 100%;
+      max-width: 440px;
+      background: #ffffff;
+      color: #1e293b;
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      padding: 28px 26px 24px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+      text-align: center;
+    }
+
+    .security-shield-badge {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 14px;
+      border-radius: 999px;
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      color: #b45309;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .security-modal-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 6px;
+    }
+
+    .security-modal-subtitle {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .security-modal-form {
+      text-align: left;
+    }
+
+    .security-modal-form .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #334155;
+      letter-spacing: 0.45px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .security-modal-form .form-input {
+      width: 100%;
+      height: 42px;
+      padding: 0 42px 0 38px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #0f172a;
+    }
+
+    .security-modal-form .form-input:focus {
+      background: #ffffff;
+      border-color: #d97706;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+    }
+
+    .security-modal-form .toggle-password {
+      color: #64748b;
+    }
+
+    .security-modal-form .toggle-password:hover {
+      color: #0f172a;
+      background: #e2e8f0;
+    }
+
+    .security-error {
+      min-height: 18px;
+      margin-bottom: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #b91c1c;
+    }
+
+    .security-submit-btn {
+      width: 100%;
+      height: 44px;
+      border: none;
+      border-radius: 8px;
+      background: #d97706;
+      color: #ffffff;
+      font-size: 13.5px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .security-submit-btn:hover {
+      background: #b45309;
+    }
+
+    .security-helper-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      color: #475569;
+      font-size: 11.5px;
+      line-height: 1.45;
+      text-align: left;
+    }
+
+    .security-helper-note svg {
+      flex-shrink: 0;
+      margin-top: 1px;
+      color: #64748b;
+    }
+
     @media (max-width: 1100px) {
-      .circle-forklift { left: 10%; }
-      .circle-tag { right: 10%; }
-      .circle-box { left: 12%; }
-      .circle-drill { right: 12%; }
+      .circle-forklift { left: 8%; }
+      .circle-tag { right: 8%; }
+      .circle-box { left: 10%; }
+      .circle-drill { right: 10%; }
     }
 
     @media (max-width: 640px) {
-      .login-card {
-        padding: 44px 28px 38px;
-      }
-      .floating-circle {
-        transform: scale(0.75);
-      }
+      .login-card.login-dark-card { padding: 34px 22px 28px; }
+      .floating-circle { transform: scale(0.75); }
       .circle-forklift { top: 4%; left: 4%; }
       .circle-tag { top: 5%; right: 4%; }
       .circle-box { bottom: 5%; left: 5%; }
       .circle-drill { bottom: 4%; right: 5%; }
     }
   </style>
-  <link rel="stylesheet" href="css/nia-theme.css" />
 </head>
-<body>
+<body class="login-dark-body">
 
   <!-- Decorative Background Icons -->
   <div class="bg-decorations" aria-hidden="true">
-    <!-- Top Left: Forklift -->
     <div class="floating-circle circle-forklift">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 12H5a2 2 0 0 0-2 2v3h2"/>
@@ -281,7 +410,6 @@
       </svg>
     </div>
 
-    <!-- Top Right: Tag -->
     <div class="floating-circle circle-tag">
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/>
@@ -289,7 +417,6 @@
       </svg>
     </div>
 
-    <!-- Bottom Left: Package/Box -->
     <div class="floating-circle circle-box">
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
@@ -298,7 +425,6 @@
       </svg>
     </div>
 
-    <!-- Bottom Right: Drill/Tool -->
     <div class="floating-circle circle-drill">
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M14 9c0 .6-.4 1-1 1H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9c.6 0 1 .4 1 1Z"/>
@@ -313,15 +439,57 @@
   </div>
 
   <!-- Center Login Card -->
-  <main class="login-card">
+  <main class="login-card login-dark-card">
+    <div class="login-wrench-badge" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+      </svg>
+    </div>
+
     <h1 class="title">GENERAL SERVICE DIVISION</h1>
     <p class="subtitle">Inventory Management System</p>
 
     <div id="loginPanel">
-    <form class="login-form" id="loginForm">
-      <!-- Username Field -->
+      <form class="login-form" id="loginForm">
+        <div class="form-group">
+          <label for="username" class="form-label">USERNAME</label>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <input type="text" id="username" name="username" class="form-input" placeholder="Enter your username" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">PASSWORD</label>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <input type="password" id="password" name="password" class="form-input" placeholder="Enter password" required />
+            <button type="button" class="toggle-password" id="togglePassword" data-target="password" aria-label="Toggle password visibility">
+              <svg id="eyeIcon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit">Sign In</button>
+      </form>
+    </div>
+
+    <form class="login-form" id="resetRequestForm" hidden>
       <div class="form-group">
-        <label for="username" class="form-label">LOGIN</label>
+        <label for="resetUsername" class="form-label">USERNAME</label>
         <div class="input-wrapper">
           <span class="input-icon">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -329,74 +497,114 @@
               <circle cx="12" cy="7" r="4"/>
             </svg>
           </span>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            class="form-input"
-            placeholder="Username"
-            required
-          />
+          <input type="text" id="resetUsername" name="username" class="form-input" placeholder="Assigned username" required />
         </div>
-      </div>
-
-      <!-- Password Field -->
-      <div class="form-group">
-        <label for="password" class="form-label">PASSWORD</label>
-        <div class="input-wrapper">
-          <span class="input-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="7.5" cy="15.5" r="3.5"/>
-              <path d="m21 2-9.6 9.6"/>
-              <path d="m15.5 7.5 3 3L22 7l-3-3"/>
-            </svg>
-          </span>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            class="form-input"
-            placeholder="Enter password"
-            required
-          />
-          <button
-            type="button"
-            class="toggle-password"
-            id="togglePassword"
-            aria-label="Toggle password visibility"
-          >
-            <!-- Eye Open Icon -->
-            <svg id="eyeIcon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Submit Button -->
-      <button type="submit" class="btn-submit">LOG IN</button>
-    </form>
-    </div>
-
-    <form class="login-form" id="resetRequestForm" hidden>
-      <div class="form-group">
-        <label for="resetUsername" class="form-label">USERNAME</label>
-        <input type="text" id="resetUsername" name="username" class="form-input" placeholder="Assigned username" required />
       </div>
       <div class="form-group">
         <label for="resetReason" class="form-label">REASON FOR RESET</label>
         <textarea id="resetReason" name="reason" class="form-input" minlength="10" maxlength="1000" rows="4" placeholder="Explain why you need a password reset" required></textarea>
       </div>
-      <button type="submit" class="btn-submit">SUBMIT REQUEST</button>
+      <button type="submit" class="btn-submit">Submit Request</button>
     </form>
 
-    <!-- Footer Links & Notice -->
     <div class="card-footer">
       <a href="#" class="forgot-link" id="forgotPasswordLink">Forgot Password?</a>
-      <p class="authorized-note">AUTHORIZED PERSONNEL OF GSD ONLY</p>
+      <p class="authorized-note">AUTHORIZED PERSONNEL ONLY</p>
     </div>
   </main>
+
+  <!-- Mandatory Security Update Required Modal (Non-Dismissible) -->
+  <div class="security-modal-backdrop" id="forcePasswordModal" role="dialog" aria-modal="true" aria-labelledby="forceModalTitle">
+    <div class="security-modal-card">
+      <div class="security-shield-badge" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <h2 class="security-modal-title" id="forceModalTitle">Security Update Required</h2>
+      <p class="security-modal-subtitle">You are using a temporary password. Please set a new permanent password to continue.</p>
+
+      <form id="forcePasswordForm" class="security-modal-form" autocomplete="off">
+        <div class="form-group">
+          <label for="forceCurrentPassword" class="form-label">CURRENT (TEMPORARY) PASSWORD</label>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <input type="password" id="forceCurrentPassword" class="form-input" placeholder="Enter the temporary password" required autocomplete="current-password" />
+            <button type="button" class="toggle-password" data-target="forceCurrentPassword" aria-label="Toggle temporary password visibility">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="forceNewPassword" class="form-label">NEW PASSWORD</label>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <input type="password" id="forceNewPassword" class="form-input" minlength="4" maxlength="200" placeholder="At least 4 characters" required autocomplete="new-password" />
+            <button type="button" class="toggle-password" data-target="forceNewPassword" aria-label="Toggle new password visibility">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="forceConfirmPassword" class="form-label">CONFIRM NEW PASSWORD</label>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <input type="password" id="forceConfirmPassword" class="form-input" minlength="4" maxlength="200" placeholder="Re-enter new password" required autocomplete="new-password" />
+            <button type="button" class="toggle-password" data-target="forceConfirmPassword" aria-label="Toggle confirm password visibility">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <p class="security-error" id="forcePasswordError" role="alert"></p>
+
+        <button type="submit" class="security-submit-btn">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+          Set New Password &amp; Continue
+        </button>
+      </form>
+
+      <div class="security-helper-note">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <span>This dialog cannot be dismissed. A new password must be set to access the system.</span>
+      </div>
+    </div>
+  </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="jscript/app.js" defer></script>

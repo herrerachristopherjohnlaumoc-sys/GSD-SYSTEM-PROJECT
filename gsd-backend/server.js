@@ -39,7 +39,14 @@ const noId = { projection: { _id: 0 } };
 const strip = ({ _id, name_key, username_key, reference_key, password_hash, ...rest }) => rest;
 
 function publicUser(user) {
-  return { id: user.id, name: user.name, username: user.username, role: user.role, status: user.status };
+  return {
+    id: user.id,
+    name: user.name,
+    username: user.username,
+    role: user.role,
+    status: user.status,
+    must_change_password: Boolean(user.must_change_password)
+  };
 }
 
 function parseCookies(header = '') {
@@ -117,7 +124,7 @@ const escapeRegex = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // Only known return-slip fields are stored, as bounded strings.
 function cleanDetails(details) {
-  const allowed = ['originalSrf', 'returningOffice', 'department', 'resender', 'receiver', 'reason'];
+  const allowed = ['originalSrf', 'returningOffice', 'location', 'department', 'resender', 'receiver', 'reason'];
   const source = details && typeof details === 'object' ? details : {};
   return Object.fromEntries(allowed.filter(key => source[key] != null).map(key => [key, String(source[key]).trim().slice(0, 500)]));
 }
@@ -164,6 +171,25 @@ app.post('/api/auth/logout', route(async (req, res) => {
 app.get('/api/auth/me', route(async (req, res) => {
   const found = await sessionUser(req);
   res.json({ user: found ? publicUser(found.user) : null });
+}));
+
+app.post('/api/auth/change-password', requireUser, route(async (req, res) => {
+  const currentPassword = typeof req.body?.currentPassword === 'string' ? req.body.currentPassword : '';
+  const newPassword = typeof req.body?.newPassword === 'string' ? req.body.newPassword : '';
+  if (!currentPassword || !verifyPassword(currentPassword, req.user.password_hash)) {
+    throw badRequest('Current (temporary) password is incorrect.');
+  }
+  if (!newPassword.trim() || newPassword.length < 4 || newPassword.length > 200) {
+    throw badRequest('New password must be at least 4 characters.');
+  }
+  if (newPassword === currentPassword) {
+    throw badRequest('New password must be different from your temporary password.');
+  }
+  await col.users.updateOne(
+    { id: req.user.id },
+    { $set: { password_hash: hashPassword(newPassword), must_change_password: false } }
+  );
+  res.json({ user: publicUser(await col.users.findOne({ id: req.user.id })) });
 }));
 
 app.post('/api/auth/reset-requests', route(async (req, res) => {
@@ -388,7 +414,10 @@ app.patch('/api/admin/users/:id', requireUser, requireAdmin, route(async (req, r
   const changes = {};
   if (role) changes.role = role;
   if (status) changes.status = status;
-  if (validPassword) changes.password_hash = hashPassword(validPassword);
+  if (validPassword) {
+    changes.password_hash = hashPassword(validPassword);
+    changes.must_change_password = true;
+  }
   if (Object.keys(changes).length) await col.users.updateOne({ id }, { $set: changes });
   // A password change or deactivation signs the user out everywhere (except the admin's own current session).
   if (validPassword || status === 'Inactive') await col.sessions.deleteMany({ user_id: id, _id: { $ne: req.sessionId } });
@@ -429,7 +458,7 @@ app.patch('/api/admin/reset-requests/:id', requireUser, requireAdmin, route(asyn
   }
   await withTransaction(async session => {
     if (account) {
-      await col.users.updateOne({ id: account.id }, { $set: { password_hash: passwordHash } }, { session });
+      await col.users.updateOne({ id: account.id }, { $set: { password_hash: passwordHash, must_change_password: true } }, { session });
       await col.sessions.deleteMany({ user_id: account.id }, { session });
     }
     await col.resetRequests.updateOne({ id: requestId, status: 'Pending' }, {

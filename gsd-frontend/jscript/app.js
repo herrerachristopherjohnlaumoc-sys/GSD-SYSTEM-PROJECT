@@ -274,20 +274,24 @@ async function gsdInitialize() {
     window.location.replace('index.html');
     return;
   }
+  if (protectedPage && user.must_change_password) {
+    window.location.replace('index.html');
+    return;
+  }
   if (protectedPage && user.role !== 'Admin' && ['settings.html', 'usermanagement.html'].includes(page)) {
     window.location.replace('inventory.html');
     return;
   }
-  if (page === 'index.html' && user) {
+  if (page === 'index.html' && user && !user.must_change_password) {
     window.location.replace('inventory.html');
     return;
   }
-  if (user) {
+  if (user && !user.must_change_password) {
     gsdSetUser(user);
     gsdBindLogout();
   }
 
-  if (page === 'index.html') gsdLoginPage();
+  if (page === 'index.html') gsdLoginPage(user?.must_change_password ? user : null);
   if (page === 'inventory.html') await gsdInventoryPage();
   if (page === 'purchaseorder.html') await gsdPurchaseOrderPage();
   if (page === 'stockout.html') await gsdStockOutPage();
@@ -297,11 +301,26 @@ async function gsdInitialize() {
   if (page === 'usermanagement.html') await gsdUserManagementPage(user);
 }
 
-function gsdLoginPage() {
+function gsdLoginPage(pendingUser = null) {
   const form = document.getElementById('loginForm');
   const resetForm = document.getElementById('resetRequestForm');
   const loginPanel = document.getElementById('loginPanel');
   const resetLink = document.getElementById('forgotPasswordLink');
+  const forceModal = document.getElementById('forcePasswordModal');
+  const forceForm = document.getElementById('forcePasswordForm');
+  const forceError = document.getElementById('forcePasswordError');
+
+  const openForcePasswordModal = () => {
+    forceForm?.reset();
+    if (forceError) forceError.textContent = '';
+    forceModal?.classList.add('open');
+    document.getElementById('forceCurrentPassword')?.focus();
+  };
+
+  if (pendingUser?.must_change_password) {
+    openForcePasswordModal();
+  }
+
   form?.addEventListener('submit', async event => {
     event.preventDefault();
     const button = form.querySelector('[type="submit"]');
@@ -311,6 +330,10 @@ function gsdLoginPage() {
         method: 'POST',
         body: JSON.stringify({ username: form.username.value, password: form.password.value })
       });
+      if (user.must_change_password) {
+        openForcePasswordModal();
+        return;
+      }
       await gsdShowDialog({
         title: 'Welcome',
         message: `Welcome ${user.username}`,
@@ -323,6 +346,50 @@ function gsdLoginPage() {
       button.disabled = false;
     }
   });
+
+  forceForm?.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (forceError) forceError.textContent = '';
+    const currentPassword = document.getElementById('forceCurrentPassword').value;
+    const newPassword = document.getElementById('forceNewPassword').value;
+    const confirmPassword = document.getElementById('forceConfirmPassword').value;
+    if (!currentPassword) {
+      if (forceError) forceError.textContent = 'Enter your current temporary password.';
+      return;
+    }
+    if (!newPassword.trim() || newPassword.length < 4) {
+      if (forceError) forceError.textContent = 'New password must be at least 4 characters.';
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      if (forceError) forceError.textContent = 'New passwords do not match.';
+      return;
+    }
+    if (newPassword === currentPassword) {
+      if (forceError) forceError.textContent = 'New password must be different from your temporary password.';
+      return;
+    }
+    const button = forceForm.querySelector('[type="submit"]');
+    button.disabled = true;
+    try {
+      const { user } = await gsdRequest('/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      forceModal?.classList.remove('open');
+      await gsdShowDialog({
+        title: 'Password Updated',
+        message: `Welcome ${user.username}. Your new password has been saved.`,
+        confirmLabel: 'Continue'
+      });
+      window.location.assign('inventory.html');
+    } catch (error) {
+      if (forceError) forceError.textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
+
   resetLink?.addEventListener('click', event => {
     event.preventDefault();
     const showReset = !loginPanel.hidden;
@@ -350,18 +417,21 @@ function gsdLoginPage() {
       button.disabled = false;
     }
   });
-  document.getElementById('togglePassword')?.addEventListener('click', () => {
-    const input = document.getElementById('password');
-    const toggle = document.getElementById('togglePassword');
-    const eyeIcon = document.getElementById('eyeIcon');
-    const reveal = input.type === 'password';
-    input.type = reveal ? 'text' : 'password';
-    toggle?.setAttribute('aria-pressed', String(reveal));
-    if (eyeIcon) {
-      eyeIcon.innerHTML = reveal
-        ? '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/>'
-        : '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>';
-    }
+  document.querySelectorAll('.toggle-password').forEach(toggle => {
+    toggle.addEventListener('click', () => {
+      const targetId = toggle.dataset.target || 'password';
+      const input = document.getElementById(targetId);
+      if (!input) return;
+      const svg = toggle.querySelector('svg');
+      const reveal = input.type === 'password';
+      input.type = reveal ? 'text' : 'password';
+      toggle.setAttribute('aria-pressed', String(reveal));
+      if (svg) {
+        svg.innerHTML = reveal
+          ? '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/>'
+          : '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>';
+      }
+    });
   });
 }
 
