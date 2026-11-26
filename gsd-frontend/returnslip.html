@@ -764,19 +764,6 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="productNameInput">PRODUCT NAME (SEARCH OR SELECT)</label>
-            <input
-              type="text"
-              id="productNameInput"
-              class="pill-input"
-              list="returnProductList"
-              placeholder="Type item name to return..."
-              required
-            />
-            <datalist id="returnProductList"></datalist>
-          </div>
-
-          <div class="form-group">
             <label class="form-label" for="returningOfficeInput">RETURNING OFFICE / DEPARTMENT</label>
             <input
               type="text"
@@ -828,38 +815,6 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="quantityReturnInput">QUANTITY TO RETURN</label>
-            <input
-              type="number"
-              id="quantityReturnInput"
-              class="pill-input"
-              min="1"
-              step="1"
-              placeholder="Enter unused quantity"
-              required
-            />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="unitInput">UNIT</label>
-            <input
-              type="text"
-              id="unitInput"
-              class="pill-input"
-              list="unitList"
-              placeholder="e.g. PCS, ROLLS, BAGS"
-              required
-            />
-            <datalist id="unitList">
-              <option value="PCS"></option>
-              <option value="ROLLS"></option>
-              <option value="BAGS"></option>
-              <option value="BOX"></option>
-              <option value="SET"></option>
-            </datalist>
-          </div>
-
-          <div class="form-group">
             <label class="form-label" for="reasonInput">REASON FOR RETURN</label>
             <input
               type="text"
@@ -868,6 +823,31 @@
               placeholder="e.g. Excess unused materials"
               required
             />
+          </div>
+
+          <!-- RETURNED ITEMS (1 TO 4 ROWS) -->
+          <div class="return-items-section">
+            <div class="return-items-header">
+              <span class="form-label" style="margin-bottom:0;">RETURNED ITEMS (UP TO 4)</span>
+              <span class="return-items-note" id="returnItemsLimitNote">1 of 4 items</span>
+            </div>
+
+            <datalist id="returnProductList"></datalist>
+            <datalist id="unitList">
+              <option value="PCS"></option>
+              <option value="ROLLS"></option>
+              <option value="BAGS"></option>
+              <option value="BOX"></option>
+              <option value="SET"></option>
+            </datalist>
+
+            <div id="returnItemsContainer" class="return-items-container"></div>
+
+            <div class="return-items-toolbar">
+              <button type="button" class="btn-add-item" id="addReturnItemBtn">
+                + Add Another Item
+              </button>
+            </div>
           </div>
 
           <div class="form-actions">
@@ -975,7 +955,7 @@
             <th style="border:1px solid #374151;background:#dbe4ef;padding:7px 8px;text-align:center;text-transform:uppercase;font-weight:700;width:30%;-webkit-print-color-adjust:exact;print-color-adjust:exact;">REMARKS</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="psItemsBody">
           <tr>
             <td style="border:1px solid #374151;padding:8px 9px;height:30px;text-align:center;" id="psItemNo">1</td>
             <td style="border:1px solid #374151;padding:8px 9px;height:30px;" id="psItemDesc">-</td>
@@ -986,11 +966,13 @@
           <tr><td style="border:1px solid #374151;height:28px;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td></tr>
           <tr><td style="border:1px solid #374151;height:28px;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td></tr>
           <tr><td style="border:1px solid #374151;height:28px;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td></tr>
+        </tbody>
+        <tfoot>
           <tr>
             <td colspan="2" style="border:1px solid #374151;padding:7px 10px;font-weight:700;text-transform:uppercase;font-size:11px;" id="psTotalItems">TOTAL ITEMS: 0</td>
             <td colspan="3" style="border:1px solid #374151;padding:7px 10px;font-weight:700;text-transform:uppercase;font-size:11px;" id="psTotalQty">TOTAL QUANTITY RETURNED: -</td>
           </tr>
-        </tbody>
+        </tfoot>
       </table>
 
       <!-- ===== REASON BOX ===== -->

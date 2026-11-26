@@ -124,7 +124,7 @@ const escapeRegex = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // Only known return-slip fields are stored, as bounded strings.
 function cleanDetails(details) {
-  const allowed = ['originalSrf', 'returningOffice', 'location', 'department', 'resender', 'receiver', 'reason'];
+  const allowed = ['originalSrf', 'returningOffice', 'location', 'department', 'resender', 'receiver', 'reason', 'remarks'];
   const source = details && typeof details === 'object' ? details : {};
   return Object.fromEntries(allowed.filter(key => source[key] != null).map(key => [key, String(source[key]).trim().slice(0, 500)]));
 }
@@ -338,6 +338,110 @@ app.post('/api/transactions', requireUser, route(async (req, res) => {
     return { transactionId, item: strip(updatedItem) };
   });
   res.status(201).json(result);
+}));
+
+app.post('/api/return-slips', requireUser, route(async (req, res) => {
+  const body = req.body || {};
+  const reference = validateText(body.reference, 'Reference', 100);
+  const occurredOn = dateValue(body.date);
+  const office = body.office ? validateText(body.office, 'Office', 120) : null;
+  const details = cleanDetails(body.details);
+  const originalSrf = validateText(details.originalSrf, 'Original SRF reference', 100);
+  const notes = String(body.notes || details.reason || '').trim().slice(0, 1000);
+  const rawItems = Array.isArray(body.items) ? body.items : [];
+  if (rawItems.length < 1 || rawItems.length > 4) {
+    throw badRequest('A return slip must have between 1 and 4 items.');
+  }
+
+  const normalizedItems = rawItems.map((entry, idx) => {
+    const itemName = validateText(entry?.itemName, `Item #${idx + 1} name`);
+    const quantity = Number(entry?.quantity);
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      throw badRequest(`Item #${idx + 1} quantity must be greater than zero.`);
+    }
+    const unit = entry?.unit && String(entry.unit).trim()
+      ? validateText(entry.unit, `Item #${idx + 1} unit`, 40).toUpperCase()
+      : '';
+    const remarks = entry?.remarks != null ? String(entry.remarks).trim().slice(0, 500) : '';
+    return { itemName, quantity, unit, remarks };
+  });
+
+  const created = await withTransaction(async session => {
+    const pendingByItemId = new Map();
+    const results = [];
+
+    for (const entry of normalizedItems) {
+      const item = await col.items.findOne({ name_key: entry.itemName.toLowerCase() }, { session });
+      if (!item) throw badRequest(`"${entry.itemName}" is not in inventory yet.`);
+
+      const issues = await col.transactions.find(
+        { item_id: item.id, type: 'SRF', reference_key: originalSrf.toLowerCase() },
+        { session }
+      ).toArray();
+      if (!issues.length) throw badRequest(`The original SRF was not found for "${item.name}".`);
+
+      const earliestIssueDate = issues.reduce(
+        (earliest, row) => (!earliest || row.occurred_on < earliest ? row.occurred_on : earliest),
+        ''
+      );
+      if (occurredOn < earliestIssueDate) {
+        throw badRequest(`Return date cannot be earlier than the original SRF date for "${item.name}".`);
+      }
+
+      const issued = issues.reduce((sum, row) => sum + Number(row.quantity), 0);
+      const returns = await col.transactions.find({ item_id: item.id, type: 'RETURN' }, { session }).toArray();
+      const alreadyReturned = returns
+        .filter(row => String(row.metadata?.originalSrf || '').toLowerCase() === originalSrf.toLowerCase())
+        .reduce((sum, row) => sum + Number(row.quantity), 0);
+      const pendingQty = pendingByItemId.get(item.id) || 0;
+      const remaining = issued - alreadyReturned - pendingQty;
+      if (entry.quantity > remaining) {
+        throw badRequest(`Return for "${item.name}" exceeds unused quantity on the SRF. Returnable: ${Math.max(0, remaining)} ${item.unit}.`);
+      }
+      pendingByItemId.set(item.id, pendingQty + entry.quantity);
+
+      await col.items.updateOne({ id: item.id }, { $inc: { quantity: entry.quantity } }, { session });
+      const transactionId = await nextId('transactions', session);
+      const movementUnit = entry.unit || item.unit;
+      await col.transactions.insertOne({
+        id: transactionId,
+        item_id: item.id,
+        type: 'RETURN',
+        reference,
+        reference_key: reference.toLowerCase(),
+        occurred_on: occurredOn,
+        quantity: entry.quantity,
+        unit_cost: null,
+        office,
+        notes,
+        metadata: { ...details, remarks: entry.remarks || details.reason || '', unit: movementUnit },
+        actor_id: req.user.id,
+        actor_name: req.user.name,
+        created_at: timestamp()
+      }, { session });
+      results.push({ transactionId, itemId: item.id, itemName: item.name, quantity: entry.quantity, unit: movementUnit });
+    }
+    return results;
+  });
+
+  res.status(201).json({ reference, items: created });
+}));
+
+app.delete('/api/return-slips/:reference', requireUser, route(async (req, res) => {
+  const reference = validateText(req.params.reference, 'Return slip reference', 100);
+  const rows = await col.transactions.find(
+    { type: 'RETURN', reference_key: reference.toLowerCase() },
+    noId
+  ).toArray();
+  if (!rows.length) return res.status(404).json({ error: 'Return slip not found.' });
+
+  await withTransaction(async session => {
+    for (const txn of rows) {
+      await col.items.updateOne({ id: txn.item_id }, { $inc: { quantity: -txn.quantity } }, { session });
+    }
+    await col.transactions.deleteMany({ type: 'RETURN', reference_key: reference.toLowerCase() }, { session });
+  });
+  res.json({ ok: true, deleted: rows.length });
 }));
 
 app.delete('/api/transactions/:id', requireUser, route(async (req, res) => {
