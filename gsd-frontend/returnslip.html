@@ -391,6 +391,13 @@
         break-inside: avoid-page !important;
       }
 
+      .print-return-slip-sheet img {
+        display: block !important;
+        visibility: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
       .print-return-slip-sheet > div:first-child {
         page-break-inside: avoid !important;
         break-inside: avoid-page !important;
@@ -919,128 +926,135 @@
   <!-- PRINT-ONLY RETURN SLIP SHEET -->
   <div class="print-return-slip-sheet" id="printReturnSlipSheet">
     <div>
-      <div class="ps-header">
-        <div class="ps-logo-row">
-          <img src="images/nia-otp-combined.jpg" class="ps-logo-combined" alt="Office of the President and NIA logos" />
-          <div class="ps-title-block">
-            <div class="ps-gov-line">Republic of the Philippines</div>
-            <div class="ps-gov-line">OFFICE OF THE PRESIDENT</div>
-            <div class="ps-agency-main">NATIONAL IRRIGATION ADMINISTRATION</div>
-            <div class="ps-agency-sub">CENTRAL OFFICE</div>
-            <div class="ps-agency-sub">ADMINISTRATIVE DEPARTMENT &bull; GENERAL SERVICE DIVISION</div>
-            <div class="ps-address">National Government Center, EDSA, Diliman, Quezon City, 1100</div>
-          </div>
-          <img src="images/bagong-pilipinas.png" class="ps-bagong-logo" alt="Bagong Pilipinas" />
+
+      <!-- ===== HEADER WITH LOGOS ===== -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:3px solid #1e4b7a;padding-bottom:10px;margin-bottom:12px;">
+        <img src="images/nia-otp-combined.jpg"
+             alt="Office of the President and NIA logos"
+             style="height:80px;width:auto;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;" />
+        <div style="flex:1;text-align:center;padding:0 8px;">
+          <div style="font-size:10px;color:#1f2937;line-height:1.3;">Republic of the Philippines</div>
+          <div style="font-size:10px;color:#1f2937;line-height:1.3;">OFFICE OF THE PRESIDENT</div>
+          <div style="font-size:13px;font-weight:800;color:#111827;text-transform:uppercase;letter-spacing:.3px;margin-top:2px;">NATIONAL IRRIGATION ADMINISTRATION</div>
+          <div style="font-size:10px;font-weight:700;color:#1f2937;text-transform:uppercase;">CENTRAL OFFICE</div>
+          <div style="font-size:10px;font-weight:700;color:#1f2937;text-transform:uppercase;">GENERAL SERVICE DIVISION</div>
+          <div style="font-size:10px;font-weight:600;color:#1f2937;text-transform:uppercase;">ADMINISTRATIVE DEPARTMENT</div>
+          <div style="font-size:9px;color:#374151;margin-top:1px;">National Center, Edsa, Diliman, Quezon City, 1100</div>
         </div>
+        <img src="images/bagong-pilipinas.png"
+             alt="Bagong Pilipinas"
+             style="height:72px;width:auto;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;" />
       </div>
 
-      <div class="ps-doc-title-wrap">
-        <div class="ps-doc-title">RETURN SLIP</div>
-        <div class="ps-doc-subtitle">GENERAL SERVICE DIVISION</div>
+      <!-- ===== DOCUMENT TITLE ===== -->
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:22px;font-weight:900;letter-spacing:.8px;color:#111827;text-transform:uppercase;">RETURN SLIP</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.4px;color:#1f2937;text-transform:uppercase;margin-top:2px;">GENERAL SERVICE DIVISION</div>
       </div>
 
-      <table class="ps-meta-table">
+      <!-- ===== METADATA TABLE ===== -->
+      <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px;">
         <tr>
-          <td><span class="ps-meta-label">RETURN SLIP NO.:</span> <span id="psSlipNo">-</span></td>
-          <td><span class="ps-meta-label">REFERENCE NO.:</span> <span id="psRefNo">-</span></td>
+          <td style="border:1px solid #374151;padding:7px 10px;width:50%;"><strong>RETURN SLIP NO.:</strong> <span id="psSlipNo">-</span></td>
+          <td style="border:1px solid #374151;padding:7px 10px;width:50%;"><strong>REFERENCE NO.:</strong> <span id="psRefNo">-</span></td>
         </tr>
         <tr>
-          <td><span class="ps-meta-label">DATE OF RETURN:</span> <span id="psDate">-</span></td>
-          <td><span class="ps-meta-label">LOCATION:</span> <span id="psLocation">-</span></td>
+          <td style="border:1px solid #374151;padding:7px 10px;"><strong>DATE OF RETURN:</strong> <span id="psDate">-</span></td>
+          <td style="border:1px solid #374151;padding:7px 10px;"><strong>LOCATION:</strong> <span id="psLocation">-</span></td>
         </tr>
       </table>
 
-      <table class="ps-items-table">
+      <!-- ===== ITEMS TABLE ===== -->
+      <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px;">
         <thead>
           <tr>
-            <th style="width: 12%;">ITEM NO.</th>
-            <th style="width: 38%;">ITEM DESCRIPTION/SPECIFICATIONS</th>
-            <th style="width: 10%;">QTY</th>
-            <th style="width: 10%;">UNIT</th>
-            <th style="width: 30%;">REMARKS</th>
+            <th style="border:1px solid #374151;background:#e5e7eb;padding:7px 8px;text-align:center;text-transform:uppercase;font-weight:700;width:12%;-webkit-print-color-adjust:exact;print-color-adjust:exact;">ITEM NO.</th>
+            <th style="border:1px solid #374151;background:#e5e7eb;padding:7px 8px;text-align:center;text-transform:uppercase;font-weight:700;width:38%;-webkit-print-color-adjust:exact;print-color-adjust:exact;">ITEM DESCRIPTION/SPECIFICATIONS</th>
+            <th style="border:1px solid #374151;background:#e5e7eb;padding:7px 8px;text-align:center;text-transform:uppercase;font-weight:700;width:10%;-webkit-print-color-adjust:exact;print-color-adjust:exact;">QTY</th>
+            <th style="border:1px solid #374151;background:#e5e7eb;padding:7px 8px;text-align:center;text-transform:uppercase;font-weight:700;width:10%;-webkit-print-color-adjust:exact;print-color-adjust:exact;">UNIT</th>
+            <th style="border:1px solid #374151;background:#e5e7eb;padding:7px 8px;text-align:center;text-transform:uppercase;font-weight:700;width:30%;-webkit-print-color-adjust:exact;print-color-adjust:exact;">REMARKS</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td class="center" id="psItemNo">1</td>
-            <td id="psItemDesc">-</td>
-            <td class="center" id="psQty">-</td>
-            <td class="center" id="psUnit">-</td>
-            <td id="psRemarks">-</td>
+            <td style="border:1px solid #374151;padding:8px 9px;height:30px;text-align:center;" id="psItemNo">1</td>
+            <td style="border:1px solid #374151;padding:8px 9px;height:30px;" id="psItemDesc">-</td>
+            <td style="border:1px solid #374151;padding:8px 9px;height:30px;text-align:center;" id="psQty">-</td>
+            <td style="border:1px solid #374151;padding:8px 9px;height:30px;text-align:center;" id="psUnit">-</td>
+            <td style="border:1px solid #374151;padding:8px 9px;height:30px;" id="psRemarks">-</td>
           </tr>
+          <tr><td style="border:1px solid #374151;height:28px;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td></tr>
+          <tr><td style="border:1px solid #374151;height:28px;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td></tr>
+          <tr><td style="border:1px solid #374151;height:28px;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td></tr>
           <tr>
-            <td></td><td></td><td></td><td></td><td></td>
-          </tr>
-          <tr>
-            <td></td><td></td><td></td><td></td><td></td>
-          </tr>
-          <tr>
-            <td></td><td></td><td></td><td></td><td></td>
-          </tr>
-          <tr class="ps-totals-row">
-            <td colspan="2" id="psTotalItems">TOTAL ITEMS: 0</td>
-            <td colspan="3" id="psTotalQty">TOTAL QUANTITY RETURNED: -</td>
+            <td colspan="2" style="border:1px solid #374151;padding:7px 10px;font-weight:700;text-transform:uppercase;font-size:11px;" id="psTotalItems">TOTAL ITEMS: 0</td>
+            <td colspan="3" style="border:1px solid #374151;padding:7px 10px;font-weight:700;text-transform:uppercase;font-size:11px;" id="psTotalQty">TOTAL QUANTITY RETURNED: -</td>
           </tr>
         </tbody>
       </table>
 
-      <div class="ps-reason-box">
-        <div class="ps-reason-header">REASON FOR RETURN:</div>
-        <div class="ps-reason-body" id="psReasonBody">-</div>
+      <!-- ===== REASON BOX ===== -->
+      <div style="border:1px solid #374151;margin-bottom:14px;">
+        <div style="border-bottom:1px solid #374151;padding:6px 10px;font-size:10.5px;font-weight:700;text-transform:uppercase;color:#111827;">REASON FOR RETURN:</div>
+        <div style="padding:10px 10px 22px 10px;font-size:11px;color:#111827;min-height:50px;" id="psReasonBody">-</div>
       </div>
 
-      <table class="ps-sign-table">
+      <!-- ===== SIGNATORIES ROW 1: RETURNED BY | RECEIVED BY ===== -->
+      <table style="width:100%;border-collapse:collapse;font-size:10.5px;margin-bottom:0;">
         <thead>
           <tr>
-            <th style="width: 50%;">RETURNED BY:</th>
-            <th style="width: 50%;">RECEIVED BY:</th>
+            <th style="border:1px solid #374151;padding:6px 10px;text-align:left;font-weight:700;text-transform:uppercase;width:50%;color:#111827;">RETURNED BY:</th>
+            <th style="border:1px solid #374151;padding:6px 10px;text-align:left;font-weight:700;text-transform:uppercase;width:50%;color:#111827;">RECEIVED BY:</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>
-              <div class="ps-sign-name" id="psSignResender">-</div>
-              <div class="ps-sign-role">GSD PERSONNEL</div>
-              <div class="ps-sign-date">Date: ______________</div>
+            <td style="border:1px solid #374151;border-top:none;padding:36px 10px 10px 10px;text-align:center;vertical-align:bottom;color:#111827;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;border-top:1px solid #4b5563;display:inline-block;padding-top:3px;min-width:160px;" id="psSignResender">-</div>
+              <div style="font-size:10px;color:#374151;margin-top:1px;">GSD PERSONNEL</div>
+              <div style="text-align:left;font-size:10.5px;margin-top:8px;color:#111827;">Date: ______________</div>
             </td>
-            <td>
-              <div class="ps-sign-name" id="psSignReceiver">-</div>
-              <div class="ps-sign-role">STOCK PERSONNEL</div>
-              <div class="ps-sign-date">Date: ______________</div>
+            <td style="border:1px solid #374151;border-top:none;padding:36px 10px 10px 10px;text-align:center;vertical-align:bottom;color:#111827;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;border-top:1px solid #4b5563;display:inline-block;padding-top:3px;min-width:160px;" id="psSignReceiver">-</div>
+              <div style="font-size:10px;color:#374151;margin-top:1px;">STOCK PERSONNEL</div>
+              <div style="text-align:left;font-size:10.5px;margin-top:8px;color:#111827;">Date: ______________</div>
             </td>
           </tr>
         </tbody>
       </table>
 
-      <table class="ps-sign-table">
+      <!-- ===== SIGNATORIES ROW 2: NOTED BY | APPROVED BY ===== -->
+      <table style="width:100%;border-collapse:collapse;font-size:10.5px;margin-bottom:16px;">
         <thead>
           <tr>
-            <th style="width: 50%;">Noted by:</th>
-            <th style="width: 50%;">APPROVED BY:</th>
+            <th style="border:1px solid #374151;border-top:none;padding:6px 10px;text-align:left;font-weight:700;text-transform:uppercase;width:50%;color:#111827;">NOTED BY:</th>
+            <th style="border:1px solid #374151;border-top:none;padding:6px 10px;text-align:left;font-weight:700;text-transform:uppercase;width:50%;color:#111827;">APPROVED BY:</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>
-              <div class="ps-sign-name">ENGR. LEXTER G. CADELIÑA</div>
-              <div class="ps-sign-role">MAINTENANCE SUPERINTENDENT B</div>
-              <div class="ps-sign-date">Date: ______________</div>
+            <td style="border:1px solid #374151;border-top:none;padding:36px 10px 10px 10px;text-align:center;vertical-align:bottom;color:#111827;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;border-top:1px solid #4b5563;display:inline-block;padding-top:3px;min-width:160px;">ENGR. LEXTER G. CADELIÑA</div>
+              <div style="font-size:10px;color:#374151;margin-top:1px;">MAINTENANCE SUPERINTENDENT B</div>
+              <div style="text-align:left;font-size:10.5px;margin-top:8px;color:#111827;">Date: ______________</div>
             </td>
-            <td>
-              <div class="ps-sign-name">Arch. RUTHGEN C. MALAZARTE-ABDULA</div>
-              <div class="ps-sign-role">Manager, General Services Division</div>
-              <div class="ps-sign-date">Date: ______________</div>
+            <td style="border:1px solid #374151;border-top:none;padding:36px 10px 10px 10px;text-align:center;vertical-align:bottom;color:#111827;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;border-top:1px solid #4b5563;display:inline-block;padding-top:3px;min-width:160px;">ARCH. RUTHGEN C. MALAZARTE-ABDULA</div>
+              <div style="font-size:10px;color:#374151;margin-top:1px;">Manager, General Services Division</div>
+              <div style="text-align:left;font-size:10.5px;margin-top:8px;color:#111827;">Date: ______________</div>
             </td>
           </tr>
         </tbody>
       </table>
+
     </div>
 
-    <div class="ps-footer">
+    <!-- ===== FOOTER ===== -->
+    <div style="border-top:2px solid #1e4b7a;padding-top:7px;font-size:9px;color:#374151;line-height:1.5;">
       <div>National Government Center, EDSA, Diliman, Quezon City, 1100 Philippines</div>
       <div>Trunk line Numbers: (02) 8 929 6071 to 78 &bull; Telefax Number: (02) 8 928 9343</div>
       <div>Email: contact-us@nia.gov.ph &bull; Website: www.nia.gov.ph &bull; TIN: 000916415</div>
-      <div style="margin-top: 4px; font-weight: 600;">Form No.: NIA-GSD-RS-2026 &bull; Rev. 01 | Page 1 of 1</div>
+      <div style="margin-top:3px;font-weight:600;">Form No.: NIA-GSD-RS-2026 &bull; Rev. 01 | Page 1 of 1</div>
     </div>
   </div>
 
