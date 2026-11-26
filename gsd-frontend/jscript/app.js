@@ -847,14 +847,26 @@ async function gsdReturnPage() {
                 ${officeLabel ? `<div class="recent-entry-office">Office: ${gsdEscape(officeLabel)}</div>` : ''}
                 <small class="recent-entry-actor">Recorded by ${gsdEscape(row.actor_name || 'System')}</small>
               </div>
-              <button type="button" class="archive-print-btn" data-action="print-slip" data-id="${row.id}" title="Print Return Slip ${gsdEscape(row.reference)}" aria-label="Print Return Slip ${gsdEscape(row.reference)}">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                  <rect x="6" y="14" width="12" height="8"></rect>
-                </svg>
-                Print
-              </button>
+              <div class="archive-entry-actions">
+                <button type="button" class="archive-print-btn" data-action="print-slip" data-id="${row.id}" title="Print Return Slip ${gsdEscape(row.reference)}" aria-label="Print Return Slip ${gsdEscape(row.reference)}">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                  </svg>
+                  Print
+                </button>
+                <button type="button" class="archive-delete-btn" data-action="delete-slip" data-id="${row.id}" title="Delete Return Slip ${gsdEscape(row.reference)}" aria-label="Delete Return Slip ${gsdEscape(row.reference)}">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                    <path d="M10 11v6"></path>
+                    <path d="M14 11v6"></path>
+                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+                  </svg>
+                  Delete
+                </button>
+              </div>
             </article>`;
         }).join('')}
       </section>`).join('');
@@ -873,23 +885,37 @@ async function gsdReturnPage() {
     renderArchive();
   });
 
-  archiveContainer?.addEventListener('click', event => {
-    const button = event.target.closest('button[data-action="print-slip"]');
+  archiveContainer?.addEventListener('click', async event => {
+    const button = event.target.closest('button[data-action]');
     if (!button) return;
     const record = archiveRows.find(row => row.id === Number(button.dataset.id));
     if (!record) return;
-    const details = parseMeta(record);
-    gsdUpdatePrintSlip({
-      ...details,
-      reference: record.reference,
-      itemNo: record.item_id ? `PROD${String(record.item_id).padStart(4, '0')}` : '1',
-      itemName: record.item_name,
-      quantity: record.quantity,
-      unit: record.unit,
-      date: record.occurred_on,
-      reason: details.reason || record.notes || '-'
-    });
-    window.print();
+
+    if (button.dataset.action === 'print-slip') {
+      const details = parseMeta(record);
+      gsdUpdatePrintSlip({
+        ...details,
+        reference: record.reference,
+        itemNo: record.item_id ? `PROD${String(record.item_id).padStart(4, '0')}` : '1',
+        itemName: record.item_name,
+        quantity: record.quantity,
+        unit: record.unit,
+        date: record.occurred_on,
+        reason: details.reason || record.notes || '-'
+      });
+      window.print();
+    } else if (button.dataset.action === 'delete-slip') {
+      if (!confirm(`Delete return slip ${record.reference}?\n\nThis will reverse the restocked quantity (${record.quantity} ${record.unit}) and cannot be undone.`)) return;
+      button.disabled = true;
+      try {
+        await gsdRequest(`/transactions/${record.id}`, { method: 'DELETE' });
+        gsdToast('Return slip deleted and stock adjusted.');
+        await loadArchive();
+      } catch (error) {
+        gsdToast(error.message, true);
+        button.disabled = false;
+      }
+    }
   });
 
   gsdWireClear(form, document.getElementById('clearFormBtn'), () => srfInput.focus());

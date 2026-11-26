@@ -861,6 +861,44 @@ tbody td {
   color: #fff;
 }
 
+.archive-entry-actions {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: stretch;
+}
+
+.archive-delete-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 32px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid #e8c5bf;
+  border-radius: 6px;
+  background: #fff8f6;
+  color: #a74436;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, color .15s ease;
+}
+
+.archive-delete-btn:hover {
+  border-color: #bd5948;
+  background: #a74436;
+  color: #fff;
+}
+
+.archive-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .toast,
 .toast-banner {
   position: fixed;

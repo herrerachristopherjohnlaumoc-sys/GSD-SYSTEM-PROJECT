@@ -340,6 +340,20 @@ app.post('/api/transactions', requireUser, route(async (req, res) => {
   res.status(201).json(result);
 }));
 
+app.delete('/api/transactions/:id', requireUser, route(async (req, res) => {
+  const id = parsePositiveId(req.params.id, 'transaction ID');
+  const txn = await col.transactions.findOne({ id }, noId);
+  if (!txn) return res.status(404).json({ error: 'Transaction not found.' });
+  await withTransaction(async session => {
+    // RETURN transactions added stock back; reversing one removes that quantity again.
+    if (txn.type === 'RETURN') {
+      await col.items.updateOne({ id: txn.item_id }, { $inc: { quantity: -txn.quantity } }, { session });
+    }
+    await col.transactions.deleteOne({ id }, { session });
+  });
+  res.json({ ok: true });
+}));
+
 app.get('/api/stock-card', requireUser, route(async (req, res) => {
   const query = String(req.query.item || '').trim();
   const queryLower = query.toLowerCase();
