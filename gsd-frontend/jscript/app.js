@@ -1035,26 +1035,36 @@ async function gsdReturnPage() {
     }
   });
 
+  const errorBanner = document.getElementById('returnSlipError');
+  const setFormError = (message = '') => {
+    if (!errorBanner) return;
+    errorBanner.textContent = message;
+    errorBanner.hidden = !message;
+  };
+
+  form.addEventListener('input', () => setFormError(''));
   gsdWireClear(form, document.getElementById('clearFormBtn'), () => {
+    setFormError('');
     resetItemRows();
     srfInput.focus();
   });
   form.addEventListener('submit', async event => {
     event.preventDefault();
+    setFormError('');
     const button = form.querySelector('[type="submit"]');
     button.disabled = true;
     const reference = `RS-${gsdToday().replace(/-/g, '')}-${String(Date.now()).slice(-6)}`;
     const details = {
-      originalSrf: srfInput.value,
-      returningOffice: officeInput.value,
-      location: document.getElementById('locationInput').value,
-      resender: document.getElementById('resenderInput').value,
-      receiver: document.getElementById('receiverInput').value,
-      reason: document.getElementById('reasonInput').value
+      originalSrf: srfInput.value.trim(),
+      returningOffice: officeInput.value.trim(),
+      location: document.getElementById('locationInput').value.trim(),
+      resender: document.getElementById('resenderInput').value.trim(),
+      receiver: document.getElementById('receiverInput').value.trim(),
+      reason: document.getElementById('reasonInput').value.trim()
     };
     const items = [...itemsContainer.querySelectorAll('.return-item-row')].map(row => ({
       itemName: row.querySelector('.return-item-name').value.trim(),
-      quantity: row.querySelector('.return-item-qty').value,
+      quantity: Number(row.querySelector('.return-item-qty').value),
       unit: row.querySelector('.return-item-unit').value.trim(),
       remarks: row.querySelector('.return-item-remarks').value.trim()
     }));
@@ -1087,6 +1097,8 @@ async function gsdReturnPage() {
       srfRows = await syncSrfSuggestions();
       await loadArchive();
     } catch (error) {
+      console.error('Return slip submission failed:', error.message);
+      setFormError(error.message);
       gsdToast(error.message, true);
     } finally {
       button.disabled = false;

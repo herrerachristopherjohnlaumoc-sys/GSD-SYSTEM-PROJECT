@@ -367,6 +367,14 @@ app.post('/api/return-slips', requireUser, route(async (req, res) => {
   });
 
   const created = await withTransaction(async session => {
+    const srfExists = await col.transactions.findOne(
+      { type: 'SRF', reference_key: originalSrf.toLowerCase() },
+      { session, projection: { _id: 1 } }
+    );
+    if (!srfExists) {
+      throw badRequest(`Original SRF "${originalSrf}" was not found.`);
+    }
+
     const pendingByItemId = new Map();
     const results = [];
 
@@ -378,27 +386,28 @@ app.post('/api/return-slips', requireUser, route(async (req, res) => {
         { item_id: item.id, type: 'SRF', reference_key: originalSrf.toLowerCase() },
         { session }
       ).toArray();
-      if (!issues.length) throw badRequest(`The original SRF was not found for "${item.name}".`);
 
-      const earliestIssueDate = issues.reduce(
-        (earliest, row) => (!earliest || row.occurred_on < earliest ? row.occurred_on : earliest),
-        ''
-      );
-      if (occurredOn < earliestIssueDate) {
-        throw badRequest(`Return date cannot be earlier than the original SRF date for "${item.name}".`);
-      }
+      if (issues.length) {
+        const earliestIssueDate = issues.reduce(
+          (earliest, row) => (!earliest || row.occurred_on < earliest ? row.occurred_on : earliest),
+          ''
+        );
+        if (occurredOn < earliestIssueDate) {
+          throw badRequest(`Return date cannot be earlier than the original SRF date for "${item.name}".`);
+        }
 
-      const issued = issues.reduce((sum, row) => sum + Number(row.quantity), 0);
-      const returns = await col.transactions.find({ item_id: item.id, type: 'RETURN' }, { session }).toArray();
-      const alreadyReturned = returns
-        .filter(row => String(row.metadata?.originalSrf || '').toLowerCase() === originalSrf.toLowerCase())
-        .reduce((sum, row) => sum + Number(row.quantity), 0);
-      const pendingQty = pendingByItemId.get(item.id) || 0;
-      const remaining = issued - alreadyReturned - pendingQty;
-      if (entry.quantity > remaining) {
-        throw badRequest(`Return for "${item.name}" exceeds unused quantity on the SRF. Returnable: ${Math.max(0, remaining)} ${item.unit}.`);
+        const issued = issues.reduce((sum, row) => sum + Number(row.quantity), 0);
+        const returns = await col.transactions.find({ item_id: item.id, type: 'RETURN' }, { session }).toArray();
+        const alreadyReturned = returns
+          .filter(row => String(row.metadata?.originalSrf || '').toLowerCase() === originalSrf.toLowerCase())
+          .reduce((sum, row) => sum + Number(row.quantity), 0);
+        const pendingQty = pendingByItemId.get(item.id) || 0;
+        const remaining = issued - alreadyReturned - pendingQty;
+        if (entry.quantity > remaining) {
+          throw badRequest(`Return for "${item.name}" exceeds unused quantity on ${originalSrf}. Returnable: ${Math.max(0, remaining)} ${item.unit}.`);
+        }
+        pendingByItemId.set(item.id, pendingQty + entry.quantity);
       }
-      pendingByItemId.set(item.id, pendingQty + entry.quantity);
 
       await col.items.updateOne({ id: item.id }, { $inc: { quantity: entry.quantity } }, { session });
       const transactionId = await nextId('transactions', session);
