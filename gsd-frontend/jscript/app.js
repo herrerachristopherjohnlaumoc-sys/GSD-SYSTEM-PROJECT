@@ -1464,8 +1464,7 @@ async function gsdStockCardPage() {
     const formatRow = row => {
       const receipt = row.type === 'SRF' ? '-' : gsdFormatNumber(row.quantity);
       const issue = row.type === 'SRF' ? gsdFormatNumber(row.quantity) : '-';
-      const label = row.type === 'PO' ? 'PO' : row.type === 'SRF' ? 'SRF' : row.type === 'RETURN' ? 'Return' : 'Opening';
-      return `<tr><td>${gsdDisplayDate(row.occurred_on)}</td><td>${gsdEscape(row.reference)} <small>${label}</small></td><td>${receipt}</td><td>${issue}</td><td>${gsdEscape(row.office || '-')}</td><td><strong>${gsdFormatNumber(row.balance)}</strong></td></tr>`;
+      return `<tr><td>${gsdDisplayDate(row.occurred_on)}</td><td>${gsdEscape(row.reference || '-')}</td><td>${receipt}</td><td>${issue}</td><td>${gsdEscape(row.office || '-')}</td><td><strong>${gsdFormatNumber(row.balance)}</strong></td></tr>`;
     };
 
     const pageCount = Math.max(1, Math.ceil(transactions.length / GSD_PAGE_SIZE));
