@@ -386,10 +386,20 @@
         width: 100% !important;
         height: auto !important;
         min-height: 0 !important;
-        padding: 10mm 12mm !important;
+        padding: 10mm 12mm 40mm 12mm !important;
         color: #111827 !important;
         page-break-inside: avoid !important;
         break-inside: avoid-page !important;
+      }
+
+      .print-wave-footer {
+        position: fixed !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        pointer-events: none !important;
+        z-index: 10 !important;
       }
 
       .print-return-slip-sheet img {
@@ -1057,11 +1067,16 @@
 
     </div>
 
-    <!-- ===== FOOTER ===== -->
-    <div style="border-top:2px solid #1e4b7a;padding-top:7px;font-size:9px;color:#374151;line-height:1.5;">
-      <div>National Government Center, EDSA, Diliman, Quezon City, 1100 Philippines</div>
-      <div>Trunk line Numbers: (02) 8 929 6071 to 78 &bull; Telefax Number: (02) 8 928 9343</div>
-      <div>Email: contact-us@nia.gov.ph &bull; Website: www.nia.gov.ph &bull; TIN: 000916415</div>
+    <!-- ===== FOOTER WITH WAVE ===== -->
+    <div class="print-wave-footer">
+      <img src="images/nia-footer-wave.png"
+           alt=""
+           style="width:100%;height:auto;display:block;-webkit-print-color-adjust:exact;print-color-adjust:exact;" />
+      <div style="position:absolute;left:12mm;bottom:6.5mm;z-index:2;max-width:62%;font-size:8.5pt;color:#111827;line-height:1.4;text-shadow:0 0 4px rgba(255,255,255,0.95);">
+        <div style="font-weight:700;">National Government Center, EDSA, Diliman, Quezon City, 1100 Philippines</div>
+        <div>Trunk line Numbers: (02) 8 929 6071 to 78 &bull; Telefax Number: (02) 8 928 9343</div>
+        <div>Email: <span style="color:#1d4ed8;text-decoration:underline;">contact-us@nia.gov.ph</span> &bull; Website: <span style="color:#1d4ed8;text-decoration:underline;">www.nia.gov.ph</span> &bull; TIN: 000916415</div>
+      </div>
     </div>
   </div>
 
