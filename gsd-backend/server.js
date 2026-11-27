@@ -3,6 +3,7 @@ const path = require('node:path');
 const express = require('express');
 const helmet = require('helmet');
 const { col, connect, ping, close, nextId, withTransaction, hashPassword, verifyPassword, timestamp } = require('./db');
+const createPettyCashRouter = require('./routes/pettyCash');
 
 const app = express();
 const loginAttempts = new Map();
@@ -81,6 +82,13 @@ const requireUser = route(async (req, res, next) => {
 
 function requireAdmin(req, res, next) {
   if (req.user.role !== 'Admin') return res.status(403).json({ error: 'Administrator access is required.' });
+  next();
+}
+
+function requirePettyCashAccess(req, res, next) {
+  if (!['Admin', 'Petty Cash'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Petty Cash or Administrator access is required.' });
+  }
   next();
 }
 
@@ -561,7 +569,7 @@ app.post('/api/admin/users', requireUser, requireAdmin, route(async (req, res) =
   const username = validateText(req.body?.username, 'Username', 80);
   const password = validatePassword(req.body?.password);
   const role = req.body?.role;
-  if (!['Admin', 'Staff'].includes(role)) throw badRequest('Role must be Admin or Staff.');
+  if (!['Admin', 'Staff', 'Petty Cash'].includes(role)) throw badRequest('Role must be Admin, Staff, or Petty Cash.');
   if (await col.users.findOne({ username_key: username.toLowerCase() })) throw badRequest('That username is already in use.');
   const user = {
     id: await nextId('users'), name, username, username_key: username.toLowerCase(),
@@ -581,11 +589,13 @@ app.patch('/api/admin/users/:id', requireUser, requireAdmin, route(async (req, r
   const user = await col.users.findOne({ id });
   if (!user) return res.status(404).json({ error: 'User not found.' });
   const { role, status, password } = req.body || {};
-  if (role && !['Admin', 'Staff'].includes(role)) throw badRequest('Role must be Admin or Staff.');
+  if (role && !['Admin', 'Staff', 'Petty Cash'].includes(role)) throw badRequest('Role must be Admin, Staff, or Petty Cash.');
   if (status && !['Active', 'Inactive'].includes(status)) throw badRequest('Status must be Active or Inactive.');
   const validPassword = password !== undefined && password !== '' ? validatePassword(password) : null;
-  if (user.id === req.user.id && status === 'Inactive') throw badRequest('You cannot deactivate your own account.');
-  if (user.role === 'Admin' && user.status === 'Active' && (role === 'Staff' || status === 'Inactive') && await activeAdminCount() <= 1) {
+  if (user.id === req.user.id && (status === 'Inactive' || (role && role !== 'Admin'))) {
+    throw badRequest('You cannot remove your own Admin access.');
+  }
+  if (user.role === 'Admin' && user.status === 'Active' && ((role && role !== 'Admin') || status === 'Inactive') && await activeAdminCount() <= 1) {
     throw badRequest('At least one active administrator must remain.');
   }
   const changes = {};
@@ -654,7 +664,8 @@ app.get('/api/admin/backup', requireUser, requireAdmin, route(async (req, res) =
     inventory: await all(col.items),
     transactions: await all(col.transactions),
     users: await all(col.users),
-    passwordResetRequests: await all(col.resetRequests)
+    passwordResetRequests: await all(col.resetRequests),
+    pettyCashRequests: await all(col.pettyCash)
   };
   res.setHeader('Content-Disposition', `attachment; filename="gsd-backup-${new Date().toISOString().slice(0, 10)}.json"`);
   res.json(backup);
@@ -666,8 +677,20 @@ app.post('/api/admin/wipe', requireUser, requireAdmin, route(async (req, res) =>
     await col.transactions.deleteMany({}, { session });
     await col.items.deleteMany({}, { session });
     await col.resetRequests.deleteMany({}, { session });
+    await col.pettyCash.deleteMany({}, { session });
   });
   res.json({ ok: true });
+}));
+
+app.use('/api/petty-cash', createPettyCashRouter({
+  route,
+  requireUser,
+  requirePettyCashAccess,
+  validateText,
+  dateValue,
+  parsePositiveId,
+  badRequest,
+  getDefaultReorderPoint
 }));
 
 app.get('/api/health', route(async (req, res) => {
@@ -690,14 +713,16 @@ app.use((error, req, res, next) => {
 // ---------- Pages ----------
 
 // Server-side page guard: logged-out users only see the login page, Staff never receive admin pages.
-const protectedPages = new Set(['inventory.html', 'purchaseorder.html', 'stockout.html', 'stockcard.html', 'returnslip.html', 'settings.html', 'usermanagement.html']);
+const protectedPages = new Set(['inventory.html', 'purchaseorder.html', 'stockout.html', 'stockcard.html', 'returnslip.html', 'pettycash.html', 'settings.html', 'usermanagement.html']);
 const adminPages = new Set(['settings.html', 'usermanagement.html']);
+const pettyCashPages = new Set(['pettycash.html']);
 app.use(route(async (req, res, next) => {
   const page = req.path.replace(/^\/+|\/+$/g, '').toLowerCase();
   if (!protectedPages.has(page)) return next();
   const found = await sessionUser(req);
   if (!found) return res.redirect('/index.html');
   if (adminPages.has(page) && found.user.role !== 'Admin') return res.redirect('/inventory.html');
+  if (pettyCashPages.has(page) && !['Admin', 'Petty Cash'].includes(found.user.role)) return res.redirect('/inventory.html');
   res.setHeader('Cache-Control', 'no-store');
   next();
 }));

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Petty Cash &amp; SRF Request — General Service Division</title>
+  <link rel="stylesheet" href="css/request.css" />
+</head>
+<body>
+  <header class="req-topbar">
+    <div class="req-brand">
+      <div class="req-brand-badge" aria-hidden="true">GSD</div>
+      <div>
+        <div class="req-brand-title">General Service Division</div>
+        <div class="req-brand-sub">National Irrigation Administration &bull; Central Office</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="req-shell">
+    <!-- FORM CARD -->
+    <section class="req-card" id="requestFormCard">
+      <div class="req-card-head">
+        <span class="req-pill">No Login Required</span>
+        <h1>Petty Cash / SRF Request Form</h1>
+        <p>Submit purchased or requested supplies for GSD Petty Cash tracking.</p>
+      </div>
+
+      <form id="pettyCashPublicForm" autocomplete="off">
+        <div class="req-grid-2">
+          <div class="req-field">
+            <label for="reqRequestor">Requestor <span aria-hidden="true">*</span></label>
+            <input type="text" id="reqRequestor" placeholder="Full name / Office" required maxlength="120" />
+          </div>
+
+          <div class="req-field">
+            <label for="reqDate">Date <span aria-hidden="true">*</span></label>
+            <input type="date" id="reqDate" required />
+          </div>
+        </div>
+
+        <div class="req-field">
+          <label for="reqSupplier">Supplier / Store <span aria-hidden="true">*</span></label>
+          <input type="text" id="reqSupplier" placeholder="e.g. Ace Hardware / National Book Store" required maxlength="150" />
+        </div>
+
+        <div class="req-field">
+          <label for="reqPurpose">Purpose <span aria-hidden="true">*</span></label>
+          <textarea id="reqPurpose" rows="2" placeholder="Briefly describe the purpose of this purchase/request..." required maxlength="500"></textarea>
+        </div>
+
+        <div class="req-items-block">
+          <div class="req-items-head">
+            <div>
+              <h2>Items / Particulars</h2>
+              <small>Add each item purchased or requested</small>
+            </div>
+            <button type="button" class="req-btn-add" id="addReqItemBtn">+ Add Item</button>
+          </div>
+
+          <div id="reqItemsContainer" class="req-items-list"></div>
+        </div>
+
+        <div class="req-totals-box">
+          <div class="req-total-row">
+            <span>Grand Total</span>
+            <strong id="reqGrandTotal">&#8369;0.00</strong>
+          </div>
+          <div class="req-field" style="margin-top: 12px; margin-bottom: 0;">
+            <label for="reqPaymentReceived">Payment Received (&#8369;)</label>
+            <input type="number" id="reqPaymentReceived" min="0" step="0.01" placeholder="0.00" value="0" />
+          </div>
+        </div>
+
+        <p id="reqFormError" class="req-error" role="alert" hidden></p>
+
+        <button type="submit" class="req-btn-submit" id="reqSubmitBtn">
+          Submit Petty Cash Request
+        </button>
+      </form>
+    </section>
+
+    <!-- CONFIRMATION CARD -->
+    <section class="req-card req-success-card" id="requestSuccessCard" hidden>
+      <div class="req-success-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <h2>Request Submitted!</h2>
+      <p class="req-success-sub">Your Petty Cash / SRF request has been recorded for GSD review.</p>
+
+      <div class="req-ref-box">
+        <span>Request Reference No.</span>
+        <strong id="reqConfirmNo">PC-0000</strong>
+      </div>
+
+      <dl class="req-summary-list" id="reqConfirmSummary"></dl>
+
+      <button type="button" class="req-btn-submit" id="submitAnotherBtn">
+        Submit Another Request
+      </button>
+    </section>
+  </main>
+
+  <script src="js/request.js" defer></script>
+</body>
+</html>

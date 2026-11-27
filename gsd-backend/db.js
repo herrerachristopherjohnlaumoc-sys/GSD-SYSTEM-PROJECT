@@ -132,6 +132,7 @@ async function connect() {
     items: db.collection('inventory_items'),
     transactions: db.collection('transactions'),
     resetRequests: db.collection('password_reset_requests'),
+    pettyCash: db.collection('petty_cash_requests'),
     sessions: db.collection('sessions'),
     counters: db.collection('counters'),
     meta: db.collection('app_meta')
@@ -147,9 +148,12 @@ async function connect() {
     col.transactions.createIndex({ reference_key: 1 }),
     col.resetRequests.createIndex({ id: 1 }, { unique: true }),
     col.resetRequests.createIndex({ status: 1, created_at: -1, id: -1 }),
+    col.pettyCash.createIndex({ id: 1 }, { unique: true }),
+    col.pettyCash.createIndex({ request_no: 1 }, { unique: true }),
+    col.pettyCash.createIndex({ status: 1, request_date: -1, id: -1 }),
     col.sessions.createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 }),
     col.sessions.createIndex({ user_id: 1 }),
-    ...['users', 'inventory_items', 'transactions', 'password_reset_requests'].map(name =>
+    ...['users', 'inventory_items', 'transactions', 'password_reset_requests', 'petty_cash_requests'].map(name =>
       col.counters.updateOne({ _id: name }, { $setOnInsert: { seq: 0 } }, { upsert: true })
     )
   ]);

@@ -222,6 +222,11 @@ function gsdSetUser(user) {
       link.closest('.nav-item')?.remove();
     });
   }
+  if (!['Admin', 'Petty Cash'].includes(user.role)) {
+    document.querySelectorAll('a[href="pettycash.html"]').forEach(link => {
+      link.closest('.nav-item')?.remove();
+    });
+  }
 }
 
 function gsdBindLogout() {
@@ -258,7 +263,7 @@ async function gsdInitialize() {
     return;
   }
   const page = location.pathname.split('/').pop() || 'index.html';
-  const protectedPage = page !== 'index.html';
+  const protectedPage = page !== 'index.html' && page !== 'request.html';
   let user = null;
   try {
     const result = await gsdRequest('/auth/me');
@@ -279,6 +284,10 @@ async function gsdInitialize() {
     return;
   }
   if (protectedPage && user.role !== 'Admin' && ['settings.html', 'usermanagement.html'].includes(page)) {
+    window.location.replace('inventory.html');
+    return;
+  }
+  if (protectedPage && !['Admin', 'Petty Cash'].includes(user.role) && page === 'pettycash.html') {
     window.location.replace('inventory.html');
     return;
   }
@@ -1679,7 +1688,7 @@ async function gsdUserManagementPage(currentUser) {
   let lastGeneratedPassword = '';
   const pagination = gsdEnsurePagination('usersPagination', table.closest('.table-card'));
 
-  if (roleSelect) roleSelect.innerHTML = '<option value="Staff" selected>Staff</option><option value="Admin">Admin</option>';
+  if (roleSelect) roleSelect.innerHTML = '<option value="Staff" selected>Staff</option><option value="Petty Cash">Petty Cash</option><option value="Admin">Admin</option>';
   document.getElementById('userModalTitle').textContent = 'Create User Account';
   document.getElementById('editUserIndex')?.remove();
   document.getElementById('userStatusSelect')?.closest('.modal-field')?.remove();
