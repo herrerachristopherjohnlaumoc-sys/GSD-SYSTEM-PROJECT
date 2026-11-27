@@ -529,8 +529,38 @@
 
       <div class="page-header">
         <h1 class="page-title">System Settings</h1>
-        <p class="page-subtitle">Manage full-system backups and controlled data reset.</p>
+        <p class="page-subtitle">Manage inventory thresholds, full-system backups, and controlled data reset.</p>
       </div>
+
+      <!-- INVENTORY THRESHOLD CARD -->
+      <section class="settings-card">
+        <div class="section-title-row">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#162418" stroke-width="2">
+            <path d="M12 20V10"></path>
+            <path d="M18 20V4"></path>
+            <path d="M6 20v-4"></path>
+          </svg>
+          <h2 class="section-title">Default Low-Stock Threshold</h2>
+        </div>
+        <p class="section-desc">
+          Set the default low-stock threshold (reorder point) used for new products and items without a custom per-item threshold. Products with a custom threshold set via Inventory Edit keep their override unless you apply the default to all products.
+        </p>
+
+        <label class="scope-label" for="defaultThresholdInput">Default Low-Stock Threshold (Units):</label>
+        <div class="scope-controls">
+          <input type="number" id="defaultThresholdInput" class="scope-select" min="0" step="1" value="7" style="max-width:140px;" />
+          <span class="scope-pill">Items at or below this quantity show &ldquo;Low Stock&rdquo;</span>
+        </div>
+
+        <div class="btn-row" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;">
+          <button type="button" class="btn-outline" id="saveDefaultThresholdBtn">
+            Save Default Threshold
+          </button>
+          <button type="button" class="btn-outline" id="applyAllThresholdBtn" style="border-color:#d97706;color:#9a5b13;">
+            Apply Default to All Products
+          </button>
+        </div>
+      </section>
 
       <!-- DATA BACKUP & RECOVERY CARD -->
       <section class="settings-card">

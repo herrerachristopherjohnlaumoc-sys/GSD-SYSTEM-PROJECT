@@ -443,8 +443,15 @@ function gsdProductOptions(items) {
   return items.map(item => `<option value="${gsdEscape(item.name)}"></option>`).join('');
 }
 
+function gsdEffectiveThreshold(item, defaultThreshold = 7) {
+  const raw = item?.reorder_point;
+  return Number.isFinite(Number(raw)) && raw !== '' && raw != null ? Number(raw) : Number(defaultThreshold);
+}
+
 async function gsdInventoryPage() {
-  let items = await gsdGetInventory();
+  const inventoryData = await gsdRequest('/inventory');
+  let items = inventoryData.items || [];
+  let defaultThreshold = Number.isFinite(Number(inventoryData.default_reorder_point)) ? Number(inventoryData.default_reorder_point) : 7;
   const tbody = document.getElementById('inventoryTableBody');
   const queryInput = document.getElementById('searchInput');
   const categorySelect = document.getElementById('categoryFilter');
@@ -455,7 +462,7 @@ async function gsdInventoryPage() {
   const monthKey = item => String(item.created_at || '').slice(0, 7);
 
   const syncMetaAndFilters = () => {
-    const lowStock = items.filter(item => Number(item.quantity) <= Number(item.reorder_point)).length;
+    const lowStock = items.filter(item => Number(item.quantity) <= gsdEffectiveThreshold(item, defaultThreshold)).length;
     const totalCount = document.getElementById('totalProductsKpi');
     if (totalCount) totalCount.textContent = items.length;
     const lowCount = document.getElementById('lowStockKpi');
@@ -505,7 +512,7 @@ async function gsdInventoryPage() {
         <td>${gsdEscape(item.category)}</td>
         <td>${gsdFormatNumber(item.quantity)}</td>
         <td>${gsdEscape(item.unit)}</td>
-        <td><span class="badge ${Number(item.quantity) <= Number(item.reorder_point) ? 'badge-lowstock' : 'badge-instock'}">${Number(item.quantity) <= Number(item.reorder_point) ? 'Low Stock' : 'In Stock'}</span></td>
+        <td><span class="badge ${Number(item.quantity) <= gsdEffectiveThreshold(item, defaultThreshold) ? 'badge-lowstock' : 'badge-instock'}" title="Low stock threshold: &le; ${gsdEffectiveThreshold(item, defaultThreshold)}">${Number(item.quantity) <= gsdEffectiveThreshold(item, defaultThreshold) ? 'Low Stock' : 'In Stock'}</span></td>
         <td>${gsdDisplayDate(item.created_at)}</td>
         <td class="inv-actions-cell"><div class="action-icons">
           <button type="button" class="icon-btn icon-only" data-action="edit" data-id="${item.id}" title="Edit product" aria-label="Edit ${gsdEscape(item.name)}">
@@ -572,7 +579,7 @@ async function gsdInventoryPage() {
       document.getElementById('editProductName').value = item.name;
       document.getElementById('editProductCategory').value = item.category;
       document.getElementById('editProductUnit').value = item.unit;
-      document.getElementById('editProductReorderPoint').value = item.reorder_point ?? 7;
+      document.getElementById('editProductReorderPoint').value = gsdEffectiveThreshold(item, defaultThreshold);
       editModal?.classList.add('open');
       document.getElementById('editProductName')?.focus();
     } else if (button.dataset.action === 'delete') {
@@ -613,8 +620,8 @@ async function gsdInventoryPage() {
         item.category,
         item.quantity,
         item.unit,
-        Number(item.quantity) <= Number(item.reorder_point) ? 'Low Stock' : 'In Stock',
-        item.reorder_point,
+        Number(item.quantity) <= gsdEffectiveThreshold(item, defaultThreshold) ? 'Low Stock' : 'In Stock',
+        gsdEffectiveThreshold(item, defaultThreshold),
         gsdDisplayDate(item.created_at)
       ])
     ]);
@@ -1524,8 +1531,64 @@ async function gsdStockCardPage() {
   await render(search.value.trim());
 }
 
-function gsdSettingsPage() {
+async function gsdSettingsPage() {
   const modal = document.getElementById('wipeModal');
+  const thresholdInput = document.getElementById('defaultThresholdInput');
+  const saveThresholdBtn = document.getElementById('saveDefaultThresholdBtn');
+  const applyAllThresholdBtn = document.getElementById('applyAllThresholdBtn');
+  if (thresholdInput) {
+    try {
+      const data = await gsdRequest('/settings/threshold');
+      thresholdInput.value = data.default_reorder_point ?? 7;
+    } catch {
+      thresholdInput.value = 7;
+    }
+  }
+  saveThresholdBtn?.addEventListener('click', async () => {
+    const val = Number(thresholdInput?.value);
+    if (!Number.isInteger(val) || val < 0) {
+      gsdToast('Threshold must be a whole number (0 or greater).', true);
+      return;
+    }
+    saveThresholdBtn.disabled = true;
+    try {
+      await gsdRequest('/settings/threshold', {
+        method: 'PUT',
+        body: JSON.stringify({ default_reorder_point: val, apply_to_all: false })
+      });
+      gsdToast(`Default low-stock threshold saved (${val}).`);
+    } catch (error) {
+      gsdToast(error.message, true);
+    } finally {
+      saveThresholdBtn.disabled = false;
+    }
+  });
+  applyAllThresholdBtn?.addEventListener('click', async () => {
+    const val = Number(thresholdInput?.value);
+    if (!Number.isInteger(val) || val < 0) {
+      gsdToast('Threshold must be a whole number (0 or greater).', true);
+      return;
+    }
+    const confirmed = await gsdShowDialog({
+      title: 'Apply threshold to all products?',
+      message: `Set the low-stock threshold to ${val} for ALL inventory products? This will overwrite custom per-product thresholds.`,
+      confirmLabel: 'Apply to All',
+      cancelLabel: 'Cancel'
+    });
+    if (!confirmed) return;
+    applyAllThresholdBtn.disabled = true;
+    try {
+      await gsdRequest('/settings/threshold', {
+        method: 'PUT',
+        body: JSON.stringify({ default_reorder_point: val, apply_to_all: true })
+      });
+      gsdToast(`Applied low-stock threshold (${val}) to all products.`);
+    } catch (error) {
+      gsdToast(error.message, true);
+    } finally {
+      applyAllThresholdBtn.disabled = false;
+    }
+  });
   const downloadBtn = document.getElementById('downloadBackupBtn');
   downloadBtn?.addEventListener('click', async () => {
     downloadBtn.disabled = true;

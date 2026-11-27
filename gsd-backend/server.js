@@ -210,18 +210,65 @@ app.post('/api/auth/reset-requests', route(async (req, res) => {
 
 // ---------- Inventory & movements ----------
 
+async function getDefaultReorderPoint(session) {
+  const doc = await col.meta.findOne({ _id: 'settings' }, session ? { session } : undefined);
+  return Number.isFinite(Number(doc?.default_reorder_point)) && Number(doc.default_reorder_point) >= 0
+    ? Number(doc.default_reorder_point)
+    : 7;
+}
+
 app.get('/api/inventory', requireUser, route(async (req, res) => {
-  const items = await col.items.find({}, noId).sort({ name_key: 1 }).toArray();
+  const [items, defaultReorderPoint] = await Promise.all([
+    col.items.find({}, noId).sort({ name_key: 1 }).toArray(),
+    getDefaultReorderPoint()
+  ]);
   const firsts = await col.transactions.aggregate([
     { $sort: { id: 1 } },
     { $group: { _id: '$item_id', actor_id: { $first: '$actor_id' }, actor_name: { $first: '$actor_name' } } }
   ]).toArray();
   const firstByItem = new Map(firsts.map(row => [row._id, row]));
   const names = await userNames(firsts.map(row => row.actor_id));
-  res.json({ items: items.map(item => {
-    const first = firstByItem.get(item.id);
-    return { ...strip(item), created_by: (first && (names.get(first.actor_id) || first.actor_name)) || 'System' };
-  }) });
+  res.json({
+    default_reorder_point: defaultReorderPoint,
+    items: items.map(item => {
+      const first = firstByItem.get(item.id);
+      return { ...strip(item), created_by: (first && (names.get(first.actor_id) || first.actor_name)) || 'System' };
+    })
+  });
+}));
+
+app.get('/api/settings/threshold', requireUser, route(async (req, res) => {
+  res.json({ default_reorder_point: await getDefaultReorderPoint() });
+}));
+
+app.put('/api/settings/threshold', requireUser, route(async (req, res) => {
+  const body = req.body || {};
+  const threshold = Number(body.default_reorder_point);
+  if (!Number.isInteger(threshold) || threshold < 0) {
+    throw badRequest('Default low stock threshold must be a whole number (0 or greater).');
+  }
+  const applyToAll = Boolean(body.apply_to_all);
+  await withTransaction(async session => {
+    await col.meta.updateOne(
+      { _id: 'settings' },
+      { $set: { default_reorder_point: threshold, updated_at: timestamp() } },
+      { upsert: true, session }
+    );
+    if (applyToAll) {
+      await col.items.updateMany(
+        {},
+        { $set: { reorder_point: threshold, custom_reorder_point: false } },
+        { session }
+      );
+    } else {
+      await col.items.updateMany(
+        { custom_reorder_point: { $ne: true } },
+        { $set: { reorder_point: threshold } },
+        { session }
+      );
+    }
+  });
+  res.json({ ok: true, default_reorder_point: threshold, applied_to_all: applyToAll });
 }));
 
 app.patch('/api/inventory/:id', requireUser, route(async (req, res) => {
@@ -233,16 +280,18 @@ app.patch('/api/inventory/:id', requireUser, route(async (req, res) => {
   const category = body.category !== undefined ? validateText(body.category, 'Category', 120) : existing.category;
   const unit = body.unit !== undefined ? validateText(body.unit, 'Unit', 60) : existing.unit;
   let reorderPoint = existing.reorder_point;
+  let customReorderPoint = Boolean(existing.custom_reorder_point);
   if (body.reorder_point !== undefined && body.reorder_point !== '') {
     reorderPoint = Number(body.reorder_point);
-    if (!Number.isFinite(reorderPoint) || reorderPoint < 0) throw badRequest('Re-order point cannot be negative.');
+    if (!Number.isFinite(reorderPoint) || reorderPoint < 0) throw badRequest('Low stock threshold cannot be negative.');
+    customReorderPoint = true;
   }
   const nameKey = name.toLowerCase();
   if (nameKey !== existing.name_key && await col.items.findOne({ name_key: nameKey, id: { $ne: id } })) {
     throw badRequest('Another inventory item already uses that product name.');
   }
   try {
-    await col.items.updateOne({ id }, { $set: { name, name_key: nameKey, category, unit, reorder_point: reorderPoint } });
+    await col.items.updateOne({ id }, { $set: { name, name_key: nameKey, category, unit, reorder_point: reorderPoint, custom_reorder_point: customReorderPoint } });
   } catch (error) {
     if (error.code === 11000) throw badRequest('Another inventory item already uses that product name.');
     throw error;
@@ -295,10 +344,11 @@ app.post('/api/transactions', requireUser, route(async (req, res) => {
     let item = await col.items.findOne({ name_key: itemName.toLowerCase() }, { session });
     if (!item && type !== 'PO') throw badRequest('This item is not in inventory yet.');
     if (!item) {
+      const defaultReorderPoint = await getDefaultReorderPoint(session);
       item = {
         id: await nextId('inventory_items', session), name: itemName, name_key: itemName.toLowerCase(),
         category: validateText(body.category, 'Category', 120), unit: validateText(body.unit, 'Unit', 40).toUpperCase(),
-        quantity: 0, reorder_point: 7, created_at: timestamp()
+        quantity: 0, reorder_point: defaultReorderPoint, custom_reorder_point: false, created_at: timestamp()
       };
       await col.items.insertOne(item, { session });
     }

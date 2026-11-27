@@ -572,15 +572,20 @@
        ========================================= */
     @media print {
       @page {
-        size: legal portrait;
+        size: portrait;
         margin: 0;
       }
 
+      html,
       body {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
         background-color: #ffffff !important;
         color: #111827 !important;
         display: block !important;
-        padding: 10mm 12mm 40mm 12mm !important;
+        padding: 10mm 12mm 38mm 12mm !important;
       }
 
       .print-report-header img,
@@ -609,6 +614,9 @@
       .actions-column-card,
       .inv-actions-col,
       .inv-actions-cell,
+      .gsd-pagination,
+      #inventoryPagination,
+      .toast,
       .modal-backdrop,
       .logout-btn {
         display: none !important;
@@ -617,6 +625,9 @@
       .layout-container,
       .main-content {
         display: block !important;
+        height: auto !important;
+        min-height: 0 !important;
+        flex: none !important;
         padding: 0 !important;
         margin: 0 !important;
         width: 100% !important;
@@ -625,7 +636,7 @@
       .print-report-header {
         display: block !important;
         text-align: center;
-        margin-bottom: 14px;
+        margin-bottom: 12px;
       }
 
       .print-report-title {
@@ -647,33 +658,51 @@
 
       .table-layout {
         display: block !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
       }
 
       .main-table-card {
+        display: block !important;
+        height: auto !important;
+        min-height: 0 !important;
         box-shadow: none !important;
-        border: 1px solid #6b7280 !important;
+        border: none !important;
         border-radius: 0 !important;
         overflow: visible !important;
+        padding: 0 !important;
+        margin: 0 !important;
       }
 
       table.inv-table {
         width: 100% !important;
         border-collapse: collapse !important;
-        font-size: 11px !important;
+        font-size: 10.5px !important;
+        height: auto !important;
+      }
+
+      table.inv-table thead {
+        display: table-header-group !important;
+      }
+
+      table.inv-table tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
 
       table.inv-table thead th {
-        background-color: #e5e7eb !important;
+        background-color: #dbe4ef !important;
         color: #111827 !important;
-        border: 1px solid #9ca3af !important;
-        padding: 8px 10px !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        border: 1px solid #374151 !important;
+        padding: 6px 8px !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
 
       table.inv-table tbody td {
-        border: 1px solid #d1d5db !important;
-        padding: 8px 10px !important;
+        border: 1px solid #374151 !important;
+        padding: 6px 8px !important;
         color: #111827 !important;
       }
 
@@ -988,7 +1017,7 @@
           <input type="text" id="editProductUnit" required />
         </div>
         <div class="modal-field">
-          <label for="editProductReorderPoint">Re-order Point</label>
+          <label for="editProductReorderPoint">Low Stock Threshold</label>
           <input type="number" id="editProductReorderPoint" min="0" step="1" required />
         </div>
         <div class="modal-actions">
