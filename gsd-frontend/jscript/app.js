@@ -640,13 +640,108 @@ function gsdDateField() {
   return () => input?.value || gsdToday();
 }
 
+const GSD_OFFICE_ALIASES = [
+  { abbr: 'HR', full: 'Human Resources', aliases: ['hr', 'hrm', 'hrmo', 'human resources', 'human resources management', 'human resources management office'] },
+  { abbr: 'HRM', full: 'Human Resources Management', aliases: ['hr', 'hrm', 'hrmo', 'human resources', 'human resources management'] },
+  { abbr: 'HRMO', full: 'Human Resources Management Office', aliases: ['hr', 'hrm', 'hrmo', 'human resources management office'] },
+  { abbr: 'OCBS', full: 'Office of the Chief of Budget Services', aliases: ['ocbs', 'office of the chief of budget services'] },
+  { abbr: 'GSD', full: 'General Service Division', aliases: ['gsd', 'general service division', 'general services division'] },
+  { abbr: 'ADMIN', full: 'Administrative Department', aliases: ['admin', 'administrative department', 'administration'] },
+  { abbr: 'ACCOUNTING', full: 'Accounting Division', aliases: ['accounting', 'accounting division', 'acctg'] },
+  { abbr: 'REGISTRAR', full: 'Office of the Registrar', aliases: ['registrar', 'office of the registrar'] },
+  { abbr: 'FAD', full: 'Financial and Administrative Division', aliases: ['fad', 'financial and administrative division'] },
+  { abbr: 'OP', full: 'Office of the President', aliases: ['op', 'office of the president'] }
+];
+
+function gsdNormalizeOffice(value) {
+  const clean = String(value || '').trim().toLowerCase();
+  if (!clean) return '';
+  const match = GSD_OFFICE_ALIASES.find(entry => entry.aliases.includes(clean));
+  return match ? match.abbr.toLowerCase() : clean;
+}
+
+function gsdOfficeSuggestionsList(extraValues = []) {
+  const seen = new Set();
+  const list = [];
+  const add = val => {
+    const clean = String(val || '').trim();
+    if (!clean) return;
+    const key = clean.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    list.push(clean);
+  };
+  extraValues.forEach(add);
+  GSD_OFFICE_ALIASES.forEach(entry => {
+    add(entry.abbr);
+    add(entry.full);
+  });
+  return list;
+}
+
+function gsdReadHistory(key) {
+  try {
+    const raw = localStorage.getItem(`gsd_history_${key}`);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.map(v => String(v).trim()).filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
+function gsdSaveHistory(key, value) {
+  const clean = String(value || '').trim();
+  if (!clean) return;
+  const existing = gsdReadHistory(key).filter(item => item.toLowerCase() !== clean.toLowerCase());
+  const next = [clean, ...existing].slice(0, 25);
+  try {
+    localStorage.setItem(`gsd_history_${key}`, JSON.stringify(next));
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
+function gsdPopulateDatalist(datalistId, values) {
+  const el = document.getElementById(datalistId);
+  if (!el) return;
+  const seen = new Set();
+  const unique = [];
+  values.forEach(val => {
+    const clean = String(val || '').trim();
+    if (!clean) return;
+    const key = clean.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    unique.push(clean);
+  });
+  el.innerHTML = unique.map(val => `<option value="${gsdEscape(val)}"></option>`).join('');
+}
+
 async function gsdPurchaseOrderPage() {
   const form = document.getElementById('purchaseOrderForm');
   const txnDate = gsdDateField();
   let inventory = await gsdGetInventory();
   const input = document.getElementById('productNameInput');
   const list = document.getElementById('productSuggestions');
-  list.innerHTML = gsdProductOptions(inventory);
+  const syncPoSuggestions = async () => {
+    list.innerHTML = gsdProductOptions(inventory);
+    const { transactions } = await gsdRequest('/transactions?type=PO&limit=200').catch(() => ({ transactions: [] }));
+    gsdPopulateDatalist('referenceSuggestions', [
+      ...gsdReadHistory('po_reference'),
+      ...transactions.map(row => row.reference)
+    ]);
+    gsdPopulateDatalist('categorySuggestions', [
+      ...gsdReadHistory('category'),
+      ...inventory.map(row => row.category),
+      'Construction Materials', 'Electrical Supplies', 'Plumbing Supplies', 'Office Supplies', 'Janitorial Supplies', 'Hardware & Tools'
+    ]);
+    gsdPopulateDatalist('unitSuggestions', [
+      ...gsdReadHistory('unit'),
+      ...inventory.map(row => row.unit),
+      'PCS', 'BOX', 'SET', 'ROLL', 'BAG', 'GALLON', 'METER'
+    ]);
+  };
+  await syncPoSuggestions();
   const fillProductDefaults = () => {
     const item = inventory.find(row => row.name.toLowerCase() === input.value.trim().toLowerCase());
     if (item) {
@@ -683,12 +778,15 @@ async function gsdPurchaseOrderPage() {
     };
     try {
       await gsdRequest('/transactions', { method: 'POST', body: JSON.stringify(body) });
+      gsdSaveHistory('po_reference', body.reference);
+      gsdSaveHistory('category', body.category);
+      gsdSaveHistory('unit', body.unit);
       gsdToast('Purchase order recorded and stock updated.');
       form.reset();
       updateTotal();
       await gsdRenderRecent('PO', 'recentPoContainer');
       inventory = await gsdGetInventory();
-      list.innerHTML = gsdProductOptions(inventory);
+      await syncPoSuggestions();
     } catch (error) {
       gsdToast(error.message, true);
     } finally {
@@ -703,7 +801,24 @@ async function gsdStockOutPage() {
   const txnDate = gsdDateField();
   let inventory = await gsdGetInventory();
   const datalist = document.getElementById('inventoryProductList');
-  datalist.innerHTML = gsdProductOptions(inventory);
+  const syncSrfSuggestions = async () => {
+    datalist.innerHTML = gsdProductOptions(inventory);
+    const { transactions } = await gsdRequest('/transactions?type=SRF&limit=200').catch(() => ({ transactions: [] }));
+    gsdPopulateDatalist('srfReferenceSuggestions', [
+      ...gsdReadHistory('srf_reference'),
+      ...transactions.map(row => row.reference)
+    ]);
+    gsdPopulateDatalist('officeSuggestions', gsdOfficeSuggestionsList([
+      ...gsdReadHistory('office'),
+      ...transactions.map(row => row.office)
+    ]));
+    gsdPopulateDatalist('unitSuggestions', [
+      ...gsdReadHistory('unit'),
+      ...inventory.map(row => row.unit),
+      'ROLLS', 'PCS', 'BAGS', 'BOX', 'SET', 'GALLON', 'METER'
+    ]);
+  };
+  await syncSrfSuggestions();
   const product = document.getElementById('productDeductInput');
   const quantity = document.getElementById('quantityDeductInput');
   const cost = document.getElementById('unitCostInput');
@@ -737,16 +852,22 @@ async function gsdStockOutPage() {
     event.preventDefault();
     const button = form.querySelector('[type="submit"]');
     button.disabled = true;
+    const srfRef = document.getElementById('srfReferenceInput').value;
+    const officeVal = document.getElementById('officeInput').value;
+    const unitVal = document.getElementById('unitInput').value;
     try {
       await gsdRequest('/transactions', { method: 'POST', body: JSON.stringify({
-        type: 'SRF', reference: document.getElementById('srfReferenceInput').value,
-        itemName: product.value, quantity: quantity.value, unit: document.getElementById('unitInput').value,
-        unitCost: cost.value, office: document.getElementById('officeInput').value, date: txnDate()
+        type: 'SRF', reference: srfRef,
+        itemName: product.value, quantity: quantity.value, unit: unitVal,
+        unitCost: cost.value, office: officeVal, date: txnDate()
       }) });
+      gsdSaveHistory('srf_reference', srfRef);
+      gsdSaveHistory('office', officeVal);
+      gsdSaveHistory('unit', unitVal);
       gsdToast('SRF recorded and stock deducted.');
       form.reset();
       inventory = await gsdGetInventory();
-      datalist.innerHTML = gsdProductOptions(inventory);
+      await syncSrfSuggestions();
       update();
       await gsdRenderRecent('SRF', 'recentStockOutContainer');
     } catch (error) {
@@ -765,6 +886,7 @@ async function gsdReturnPage() {
   document.getElementById('returnProductList').innerHTML = gsdProductOptions(inventory);
   const srfInput = document.getElementById('originalSrfInput');
   const officeInput = document.getElementById('returningOfficeInput');
+  const conditionSelect = document.getElementById('conditionSelect');
   const itemsContainer = document.getElementById('returnItemsContainer');
   const addItemBtn = document.getElementById('addReturnItemBtn');
   const limitNote = document.getElementById('returnItemsLimitNote');
@@ -775,6 +897,47 @@ async function gsdReturnPage() {
   const MAX_RETURN_ITEMS = 4;
   let archiveRows = [];
   let groupedSlips = [];
+  let lastSelectedCondition = '';
+
+  const syncReturnSuggestions = () => {
+    gsdPopulateDatalist('officeList', gsdOfficeSuggestionsList([
+      ...gsdReadHistory('office'),
+      ...archiveRows.map(row => row.office)
+    ]));
+    gsdPopulateDatalist('locationList', [
+      ...gsdReadHistory('return_location'),
+      ...archiveRows.map(row => row.metadata?.location)
+    ]);
+    gsdPopulateDatalist('resenderList', [
+      ...gsdReadHistory('return_resender'),
+      ...archiveRows.map(row => row.metadata?.resender)
+    ]);
+    gsdPopulateDatalist('receiverList', [
+      ...gsdReadHistory('return_receiver'),
+      ...archiveRows.map(row => row.metadata?.receiver)
+    ]);
+    gsdPopulateDatalist('reasonList', [
+      ...gsdReadHistory('return_reason'),
+      ...archiveRows.map(row => row.metadata?.reason || row.notes)
+    ]);
+    gsdPopulateDatalist('unitList', [
+      ...gsdReadHistory('unit'),
+      ...inventory.map(item => item.unit),
+      'PCS', 'ROLLS', 'BAGS', 'BOX', 'SET'
+    ]);
+  };
+  syncReturnSuggestions();
+
+  conditionSelect?.addEventListener('change', () => {
+    const chosen = conditionSelect.value;
+    itemsContainer.querySelectorAll('.return-item-remarks').forEach(input => {
+      const currentVal = input.value.trim();
+      if (!currentVal || (lastSelectedCondition && currentVal === lastSelectedCondition)) {
+        input.value = chosen;
+      }
+    });
+    lastSelectedCondition = chosen;
+  });
 
   const syncSrfSuggestions = async () => {
     const srfRows = (await gsdRequest('/transactions?type=SRF&limit=500')).transactions;
@@ -836,7 +999,8 @@ async function gsdReturnPage() {
     if (prefill.itemName) nameInput.value = prefill.itemName;
     if (prefill.quantity) qtyInput.value = prefill.quantity;
     if (prefill.unit) unitInput.value = prefill.unit;
-    if (prefill.remarks) remarksInput.value = prefill.remarks;
+    if (prefill.remarks != null) remarksInput.value = prefill.remarks;
+    else if (conditionSelect?.value) remarksInput.value = conditionSelect.value;
 
     const fillUnit = () => {
       const matched = inventory.find(item => item.name.toLowerCase() === nameInput.value.trim().toLowerCase());
@@ -992,6 +1156,7 @@ async function gsdReturnPage() {
   const loadArchive = async () => {
     archiveRows = (await gsdRequest('/transactions?type=RETURN&limit=500')).transactions;
     groupedSlips = groupArchiveSlips(archiveRows);
+    syncReturnSuggestions();
     renderArchive();
   };
 
@@ -1086,11 +1251,18 @@ async function gsdReturnPage() {
         itemName: entry.itemName,
         quantity: entry.quantity,
         unit: entry.unit,
-        remarks: items[idx]?.remarks || details.reason || '-'
+        remarks: items[idx]?.remarks || ''
       }));
+      gsdSaveHistory('office', details.returningOffice);
+      gsdSaveHistory('return_location', details.location);
+      gsdSaveHistory('return_resender', details.resender);
+      gsdSaveHistory('return_receiver', details.receiver);
+      gsdSaveHistory('return_reason', details.reason);
+      items.forEach(item => gsdSaveHistory('unit', item.unit));
       gsdUpdatePrintSlip({ ...details, reference, date, items: printItems });
       gsdToast('Return slip recorded and added to archive.');
       form.reset();
+      lastSelectedCondition = '';
       resetItemRows();
       inventory = await gsdGetInventory();
       document.getElementById('returnProductList').innerHTML = gsdProductOptions(inventory);
@@ -1165,7 +1337,7 @@ function gsdUpdatePrintSlip(data) {
             <td style="border:1px solid #374151;padding:8px 9px;height:30px;">${gsdEscape(entry.itemName || '-')}</td>
             <td style="border:1px solid #374151;padding:8px 9px;height:30px;text-align:center;">${entry.quantity ? gsdFormatNumber(entry.quantity) : '-'}</td>
             <td style="border:1px solid #374151;padding:8px 9px;height:30px;text-align:center;">${gsdEscape(entry.unit || '-')}</td>
-            <td style="border:1px solid #374151;padding:8px 9px;height:30px;">${gsdEscape(entry.remarks || slip.reason || '-')}</td>
+            <td style="border:1px solid #374151;padding:8px 9px;height:30px;">${gsdEscape(entry.remarks || '')}</td>
           </tr>`);
       } else {
         rowsHtml.push('<tr><td style="border:1px solid #374151;height:28px;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td><td style="border:1px solid #374151;"></td></tr>');
@@ -1210,12 +1382,60 @@ async function gsdRenderRecent(type, targetId) {
 
 async function gsdStockCardPage() {
   const search = document.getElementById('stockCardSearch');
-  const datalist = document.getElementById('stockCardItemList');
+  const dropdown = document.getElementById('stockCardDropdown');
   const allItems = await gsdGetInventory();
-  datalist.innerHTML = gsdProductOptions(allItems);
   let current = null;
   let ledgerPage = 1;
   const set = (id, value) => { const element = document.getElementById(id); if (element) element.textContent = value; };
+
+  const renderDropdown = (filterText = '') => {
+    if (!dropdown) return;
+    const query = String(filterText || '').trim().toLowerCase();
+    const matches = allItems.filter(item => {
+      if (!query) return true;
+      const code = `PROD${String(item.id).padStart(4, '0')}`.toLowerCase();
+      return item.name.toLowerCase().includes(query) ||
+        String(item.category || '').toLowerCase().includes(query) ||
+        code.includes(query);
+    });
+    if (!matches.length) {
+      dropdown.innerHTML = '<div class="stockcard-dropdown-empty">No matching products. Press Enter to search by reference.</div>';
+      return;
+    }
+    dropdown.innerHTML = matches.map(item => `
+      <button type="button" class="stockcard-dropdown-item" role="option" data-item-name="${gsdEscape(item.name)}">
+        <span class="stockcard-dropdown-name">${gsdEscape(item.name)}</span>
+        <span class="stockcard-dropdown-meta">${gsdFormatNumber(item.quantity)} ${gsdEscape(item.unit)}</span>
+      </button>`).join('');
+  };
+
+  const openDropdown = (showAll = false) => {
+    if (!dropdown) return;
+    renderDropdown(showAll ? '' : search.value);
+    dropdown.hidden = false;
+    search?.setAttribute('aria-expanded', 'true');
+  };
+
+  const closeDropdown = () => {
+    if (!dropdown) return;
+    dropdown.hidden = true;
+    search?.setAttribute('aria-expanded', 'false');
+  };
+
+  search?.addEventListener('focus', () => openDropdown(true));
+  search?.addEventListener('click', () => openDropdown(true));
+  dropdown?.addEventListener('mousedown', event => {
+    const option = event.target.closest('.stockcard-dropdown-item');
+    if (!option) return;
+    event.preventDefault();
+    search.value = option.dataset.itemName || '';
+    ledgerPage = 1;
+    closeDropdown();
+    render(search.value.trim()).catch(error => gsdToast(error.message, true));
+  });
+  document.addEventListener('click', event => {
+    if (!event.target.closest('.search-box-wrap')) closeDropdown();
+  });
 
   const clearCardMeta = () => {
     ['metaItemName', 'metaUnit', 'metaDescription', 'metaStockNo',
@@ -1232,7 +1452,7 @@ async function gsdStockCardPage() {
     const pagination = gsdEnsurePagination('stockCardPagination', body.closest('.table-wrapper'));
     if (!item) {
       clearCardMeta();
-      body.innerHTML = '<tr><td colspan="7" class="empty-ledger">No matching inventory item.</td></tr>';
+      body.innerHTML = '<tr><td colspan="6" class="empty-ledger">No matching inventory item.</td></tr>';
       printBody.innerHTML = body.innerHTML;
       gsdRenderPagination(pagination, 0, 1, () => {});
       return;
@@ -1241,34 +1461,23 @@ async function gsdStockCardPage() {
     const received = transactions.filter(row => row.type !== 'SRF').reduce((sum, row) => sum + Number(row.quantity), 0);
     const issued = transactions.filter(row => row.type === 'SRF').reduce((sum, row) => sum + Number(row.quantity), 0);
 
-    let lastIssueDate = null;
-    const enriched = transactions.map(row => {
-      let days = '-';
-      if (row.type === 'SRF') {
-        const diff = lastIssueDate ? gsdDaysBetween(lastIssueDate, row.occurred_on) : null;
-        days = diff === null ? '-' : String(diff);
-        lastIssueDate = row.occurred_on;
-      }
-      return { ...row, days };
-    });
-
     const formatRow = row => {
       const receipt = row.type === 'SRF' ? '-' : gsdFormatNumber(row.quantity);
       const issue = row.type === 'SRF' ? gsdFormatNumber(row.quantity) : '-';
       const label = row.type === 'PO' ? 'PO' : row.type === 'SRF' ? 'SRF' : row.type === 'RETURN' ? 'Return' : 'Opening';
-      return `<tr><td>${gsdDisplayDate(row.occurred_on)}</td><td>${gsdEscape(row.reference)} <small>${label}</small></td><td>${receipt}</td><td>${issue}</td><td>${gsdEscape(row.office || '-')}</td><td><strong>${gsdFormatNumber(row.balance)}</strong></td><td>${row.days}</td></tr>`;
+      return `<tr><td>${gsdDisplayDate(row.occurred_on)}</td><td>${gsdEscape(row.reference)} <small>${label}</small></td><td>${receipt}</td><td>${issue}</td><td>${gsdEscape(row.office || '-')}</td><td><strong>${gsdFormatNumber(row.balance)}</strong></td></tr>`;
     };
 
-    const pageCount = Math.max(1, Math.ceil(enriched.length / GSD_PAGE_SIZE));
+    const pageCount = Math.max(1, Math.ceil(transactions.length / GSD_PAGE_SIZE));
     ledgerPage = Math.min(ledgerPage, pageCount);
-    const pageRows = enriched.slice((ledgerPage - 1) * GSD_PAGE_SIZE, ledgerPage * GSD_PAGE_SIZE);
-    body.innerHTML = enriched.length
+    const pageRows = transactions.slice((ledgerPage - 1) * GSD_PAGE_SIZE, ledgerPage * GSD_PAGE_SIZE);
+    body.innerHTML = transactions.length
       ? pageRows.map(formatRow).join('')
-      : '<tr><td colspan="7" class="empty-ledger">No movements recorded.</td></tr>';
-    printBody.innerHTML = enriched.length
-      ? enriched.map(formatRow).join('')
-      : '<tr><td colspan="7" class="empty-ledger">No movements recorded.</td></tr>';
-    ledgerPage = gsdRenderPagination(pagination, enriched.length, ledgerPage, page => {
+      : '<tr><td colspan="6" class="empty-ledger">No movements recorded.</td></tr>';
+    printBody.innerHTML = transactions.length
+      ? transactions.map(formatRow).join('')
+      : '<tr><td colspan="6" class="empty-ledger">No movements recorded.</td></tr>';
+    ledgerPage = gsdRenderPagination(pagination, transactions.length, ledgerPage, page => {
       ledgerPage = page;
       render(query);
     });
@@ -1286,11 +1495,13 @@ async function gsdStockCardPage() {
   search.addEventListener('input', () => {
     clearTimeout(searchTimer);
     ledgerPage = 1;
+    openDropdown(false);
     searchTimer = setTimeout(() => render().catch(error => gsdToast(error.message, true)), 180);
   });
   search.addEventListener('change', () => { ledgerPage = 1; render().catch(error => gsdToast(error.message, true)); });
   search.addEventListener('keydown', event => {
-    if (event.key === 'Enter') { event.preventDefault(); ledgerPage = 1; render().catch(error => gsdToast(error.message, true)); }
+    if (event.key === 'Escape') { closeDropdown(); return; }
+    if (event.key === 'Enter') { event.preventDefault(); closeDropdown(); ledgerPage = 1; render().catch(error => gsdToast(error.message, true)); }
   });
   document.getElementById('printBtn')?.addEventListener('click', () => {
     if (!current?.item) {

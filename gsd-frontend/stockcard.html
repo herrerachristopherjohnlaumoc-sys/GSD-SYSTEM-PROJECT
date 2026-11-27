@@ -426,7 +426,7 @@
     @media print {
       @page {
         size: portrait;
-        margin: 10mm 12mm;
+        margin: 0;
       }
 
       html,
@@ -454,6 +454,7 @@
         width: 100% !important;
         height: auto !important;
         min-height: 0 !important;
+        padding: 10mm 12mm !important;
         color: #111827 !important;
       }
 
@@ -732,11 +733,12 @@
                 type="text"
                 id="stockCardSearch"
                 class="search-input"
-                list="stockCardItemList"
                 placeholder="Search item or reference..."
                 autocomplete="off"
+                aria-expanded="false"
+                aria-controls="stockCardDropdown"
               />
-              <datalist id="stockCardItemList"></datalist>
+              <div class="stockcard-dropdown" id="stockCardDropdown" role="listbox" hidden></div>
             </div>
 
             <button type="button" class="btn-action btn-print" id="printBtn">
@@ -798,16 +800,15 @@
           <table class="stockcard-table" id="stockCardTable">
             <thead>
               <tr>
-                <th rowspan="2" style="width: 11%;">Date</th>
-                <th rowspan="2" style="width: 18%;">Reference</th>
-                <th rowspan="2" style="width: 15%;">Receipt Qty.</th>
-                <th colspan="2" style="width: 24%;">Issue</th>
+                <th rowspan="2" style="width: 12%;">Date</th>
+                <th rowspan="2" style="width: 21%;">Reference</th>
+                <th rowspan="2" style="width: 14%;">Receipt Qty.</th>
+                <th colspan="2" style="width: 37%;">Issue</th>
                 <th rowspan="2" style="width: 16%;">Balance Qty.</th>
-                <th rowspan="2" style="width: 16%;">No. of Days to Consume</th>
               </tr>
               <tr>
                 <th style="width: 12%;">Qty.</th>
-                <th style="width: 12%;">Office</th>
+                <th style="width: 25%;">Office</th>
               </tr>
             </thead>
             <tbody id="stockCardBody">
@@ -870,16 +871,15 @@
       <table class="psc-ledger-table">
         <thead>
           <tr>
-            <th rowspan="2" style="width: 11%;">Date</th>
-            <th rowspan="2" style="width: 18%;">Reference</th>
-            <th rowspan="2" style="width: 15%;">Receipt Qty.</th>
-            <th colspan="2" style="width: 24%;">Issue</th>
+            <th rowspan="2" style="width: 12%;">Date</th>
+            <th rowspan="2" style="width: 21%;">Reference</th>
+            <th rowspan="2" style="width: 14%;">Receipt Qty.</th>
+            <th colspan="2" style="width: 37%;">Issue</th>
             <th rowspan="2" style="width: 16%;">Balance Qty.</th>
-            <th rowspan="2" style="width: 16%;">No. of Days to Consume</th>
           </tr>
           <tr>
             <th style="width: 12%;">Qty.</th>
-            <th style="width: 12%;">Office</th>
+            <th style="width: 25%;">Office</th>
           </tr>
         </thead>
         <tbody id="pscLedgerBody">
@@ -892,7 +892,6 @@
       <div>National Government Center, EDSA, Diliman, Quezon City, 1100 Philippines</div>
       <div>Trunk line Numbers: (02) 8 929 6071 to 78 &bull; Telefax Number: (02) 8 928 9343</div>
       <div>Email: contact-us@nia.gov.ph &bull; Website: www.nia.gov.ph &bull; TIN: 000916415</div>
-      <div style="margin-top:3px;font-weight:600;">Form No.: NIA-GSD-SC-2026 &bull; Rev. 01 | Page 1 of 1</div>
     </div>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>

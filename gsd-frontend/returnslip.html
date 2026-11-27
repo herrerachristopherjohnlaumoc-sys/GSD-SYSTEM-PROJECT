@@ -357,7 +357,7 @@
     @media print {
       @page {
         size: portrait;
-        margin: 10mm 12mm;
+        margin: 0;
       }
 
       html,
@@ -386,6 +386,7 @@
         width: 100% !important;
         height: auto !important;
         min-height: 0 !important;
+        padding: 10mm 12mm !important;
         color: #111827 !important;
         page-break-inside: avoid !important;
         break-inside: avoid-page !important;
@@ -787,9 +788,11 @@
               type="text"
               id="locationInput"
               class="pill-input"
+              list="locationList"
               placeholder="e.g. Central Office / Building A"
               required
             />
+            <datalist id="locationList"></datalist>
           </div>
 
           <div class="form-group">
@@ -798,9 +801,11 @@
               type="text"
               id="resenderInput"
               class="pill-input"
+              list="resenderList"
               placeholder="Enter returning person's name..."
               required
             />
+            <datalist id="resenderList"></datalist>
           </div>
 
           <div class="form-group">
@@ -809,9 +814,24 @@
               type="text"
               id="receiverInput"
               class="pill-input"
+              list="receiverList"
               placeholder="Enter receiving GSD personnel..."
               required
             />
+            <datalist id="receiverList"></datalist>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="conditionSelect">CONDITION / REMARKS (OPTIONAL)</label>
+            <select id="conditionSelect" class="pill-input">
+              <option value="">-- Leave blank (write manually / on print) --</option>
+              <option value="Damage">Damage</option>
+              <option value="Defective">Defective</option>
+              <option value="Excess">Excess</option>
+              <option value="Broken">Broken</option>
+              <option value="Expired">Expired</option>
+              <option value="Wrong Item">Wrong Item</option>
+            </select>
           </div>
 
           <div class="form-group">
@@ -820,9 +840,11 @@
               type="text"
               id="reasonInput"
               class="pill-input"
+              list="reasonList"
               placeholder="e.g. Excess unused materials"
               required
             />
+            <datalist id="reasonList"></datalist>
           </div>
 
           <!-- RETURNED ITEMS (1 TO 4 ROWS) -->
@@ -1040,7 +1062,6 @@
       <div>National Government Center, EDSA, Diliman, Quezon City, 1100 Philippines</div>
       <div>Trunk line Numbers: (02) 8 929 6071 to 78 &bull; Telefax Number: (02) 8 928 9343</div>
       <div>Email: contact-us@nia.gov.ph &bull; Website: www.nia.gov.ph &bull; TIN: 000916415</div>
-      <div style="margin-top:3px;font-weight:600;">Form No.: NIA-GSD-RS-2026 &bull; Rev. 01 | Page 1 of 1</div>
     </div>
   </div>
 

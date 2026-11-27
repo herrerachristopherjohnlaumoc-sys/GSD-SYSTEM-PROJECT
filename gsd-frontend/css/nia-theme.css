@@ -1035,6 +1035,76 @@ tbody td {
   font-weight: 700;
 }
 
+.search-box-wrap {
+  position: relative;
+}
+
+.stockcard-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 60;
+  width: min(360px, 82vw);
+  max-height: 290px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid #c9d8cd;
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(16, 60, 43, 0.16);
+  padding: 4px;
+}
+
+.stockcard-dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #162418;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.stockcard-dropdown-item:hover,
+.stockcard-dropdown-item.is-active {
+  background: #edf5e4;
+  color: #103c2b;
+  transform: none;
+  box-shadow: none;
+}
+
+.stockcard-dropdown-name {
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stockcard-dropdown-meta {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #546a5c;
+}
+
+.stockcard-dropdown-empty {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #6b7d72;
+}
+
+table.stockcard-table tbody td:nth-child(5),
+.psc-ledger-table tbody td:nth-child(5) {
+  white-space: normal;
+  word-break: break-word;
+}
+
 .toast,
 .toast-banner {
   position: fixed;
